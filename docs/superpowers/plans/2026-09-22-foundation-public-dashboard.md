@@ -45,6 +45,7 @@
 - vitest.workspace.ts — workspace test discovery.
 - .nvmrc — Node 24 runtime declaration.
 - .editorconfig — cross-platform text settings.
+- .secretlintrc.json — recommended secret-detection rules.
 - .gitignore — blocks credentials, sessions, databases, evidence, logs, caches, and build output.
 - LICENSE — Apache-2.0 text.
 - README.md — product purpose, safety boundaries, setup, commands, and roadmap.
@@ -74,6 +75,7 @@
 - apps/public-dashboard/next.config.test.ts — local versus Actions path behavior.
 - apps/public-dashboard/tsconfig.json — app compiler settings.
 - apps/public-dashboard/vitest.config.ts — jsdom and test setup.
+- apps/public-dashboard/eslint.config.mjs — flat ESLint configuration for Next.js and TypeScript.
 - apps/public-dashboard/src/test/setup.ts — Testing Library cleanup and matchers.
 - apps/public-dashboard/src/app/layout.tsx — metadata and root document.
 - apps/public-dashboard/src/app/page.tsx — validated build-time data entry.
@@ -107,6 +109,7 @@
 
 - .github/workflows/ci.yml — install, policy scan, lint, type check, unit test, build, and browser test.
 - .github/workflows/deploy-pages.yml — main-only static artifact deployment.
+- .github/pull_request_body.md — reproducible first-PR description with verification and safety sections.
 
 ---
 
@@ -119,6 +122,7 @@
 - Create: vitest.workspace.ts
 - Create: .nvmrc
 - Create: .editorconfig
+- Create: .secretlintrc.json
 - Create: .gitignore
 - Create: LICENSE
 - Create: README.md
@@ -191,7 +195,7 @@ Create package.json with packageManager set to pnpm@10.17.1, engines.node set to
 }
 ~~~
 
-Add root devDependencies for TypeScript 5.9, Vitest 3, secretlint 10, and @secretlint/secretlint-rule-preset-recommend 10. Create pnpm-workspace.yaml for apps/* and packages/*, strict tsconfig.base.json, and vitest.workspace.ts including tests/**/*.test.ts and workspace configurations.
+Add root devDependencies for TypeScript 5.9, Vitest 3, secretlint 10, and @secretlint/secretlint-rule-preset-recommend 10. Create .secretlintrc.json with { "rules": [{ "id": "@secretlint/secretlint-rule-preset-recommend" }] }. Create pnpm-workspace.yaml for apps/* and packages/*, strict tsconfig.base.json, and vitest.workspace.ts including tests/**/*.test.ts and workspace configurations.
 
 Run:
 
@@ -245,7 +249,7 @@ Expected: both commands PASS with no detected secret.
 - [ ] **Step 6: Commit the foundation**
 
 ~~~bash
-git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json vitest.workspace.ts .nvmrc .editorconfig .gitignore LICENSE README.md CONTRIBUTING.md SECURITY.md NOTICE.md tests/repository-policy.test.ts
+git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json vitest.workspace.ts .nvmrc .editorconfig .secretlintrc.json .gitignore LICENSE README.md CONTRIBUTING.md SECURITY.md NOTICE.md tests/repository-policy.test.ts
 git commit -m "chore: establish repository safety foundation"
 ~~~
 
@@ -490,7 +494,7 @@ Create filter-incidents.test.ts:
 
 ~~~ts
 import { describe, expect, it } from "vitest";
-import { filterIncidents } from "./filter-incidents";
+import { countByConfidence, filterIncidents } from "./filter-incidents";
 import { loadPublicDataset } from "./load-public-dataset";
 
 const incidents = loadPublicDataset().incidents;
@@ -526,6 +530,17 @@ describe("filterIncidents", () => {
       search: "no-such-synthetic-record",
     })).toEqual([]);
   });
+
+  it("counts every confidence label without dropping zero-value labels", () => {
+    expect(countByConfidence(incidents)).toEqual({
+      unverified: 1,
+      developing: 1,
+      corroborated: 1,
+      verified: 1,
+      disputed: 1,
+      false: 1,
+    });
+  });
 });
 ~~~
 
@@ -553,7 +568,7 @@ Create data/public/README.md stating:
 
 load-public-dataset.ts must import the JSON, call validatePublicDataset, and throw a message beginning Invalid public dataset: followed by joined schema errors when validation fails.
 
-filter-incidents.ts must normalize search with trim().toLocaleLowerCase(), search both languages plus both location labels, apply selected categories as an any-category match, apply confidence as an allowed-set match, copy before sorting, and order descending by occurredAt then id.
+filter-incidents.ts must normalize search with trim().toLocaleLowerCase(), search both languages plus both location labels, apply selected categories as an any-category match, apply confidence as an allowed-set match, copy before sorting, and order descending by occurredAt then id. countByConfidence must initialize all six labels to zero and increment exactly once per incident.
 
 - [ ] **Step 5: Run focused tests**
 
@@ -580,6 +595,7 @@ git commit -m "feat: add synthetic incident dataset and filters"
 - Create: apps/public-dashboard/next.config.test.ts
 - Create: apps/public-dashboard/tsconfig.json
 - Create: apps/public-dashboard/vitest.config.ts
+- Create: apps/public-dashboard/eslint.config.mjs
 - Create: apps/public-dashboard/src/test/setup.ts
 - Create: apps/public-dashboard/src/app/layout.tsx
 - Create: apps/public-dashboard/src/i18n/types.ts
@@ -653,7 +669,7 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ~~~
 
-Create the app package with Next 16, React 19, React DOM 19, @syosint/schemas workspace dependency, and test/dev dependencies. Scripts must include dev, build, lint, typecheck, test, and test:e2e.
+Create the app package with Next 16, React 19, React DOM 19, @syosint/schemas workspace dependency, and test/dev dependencies including ESLint 9, eslint-config-next 16, Testing Library React 16, jest-dom 6, jsdom 26, Vitest 3, and Playwright 1. Scripts must map lint to eslint ., typecheck to tsc --noEmit, test to vitest run, and test:e2e to playwright test. eslint.config.mjs must use the flat Next.js core-web-vitals and TypeScript configurations.
 
 - [ ] **Step 4: Implement typed dictionaries and root metadata**
 
@@ -995,6 +1011,7 @@ git commit -m "feat: compose responsive syOSINT dashboard"
 - Create: apps/public-dashboard/e2e/dashboard.spec.ts
 - Create: .github/workflows/ci.yml
 - Create: .github/workflows/deploy-pages.yml
+- Create: .github/pull_request_body.md
 - Modify: README.md
 - Modify: CONTRIBUTING.md
 
@@ -1145,4 +1162,4 @@ git push -u origin feat/foundation-public-dashboard
 gh pr create --base main --head feat/foundation-public-dashboard --title "feat: launch syOSINT public dashboard foundation" --body-file .github/pull_request_body.md
 ~~~
 
-The pull-request body must summarize visible features, safety boundaries, synthetic-only data, verification commands and results, screenshots for desktop/mobile/Arabic, deployment impact, and explicitly deferred collector/Telegram work.
+Create .github/pull_request_body.md before running the command. It must summarize visible features, safety boundaries, synthetic-only data, verification commands and results, screenshots for desktop/mobile/Arabic, deployment impact, and explicitly deferred collector/Telegram work.
