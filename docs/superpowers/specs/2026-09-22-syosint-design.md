@@ -173,9 +173,11 @@ Incidents may have multiple categories.
 
 ## 8. Lifecycle and verification
 
-Incident lifecycle:
+Workflow lifecycle:
 
-`collected → triage → investigating → corroborated/verified/disputed → approved → published → corrected/withdrawn`
+`collected → triage → investigating → review-ready → approved → published → corrected/withdrawn`
+
+Confidence is an independent dimension. An incident may be approved or published with an `Unverified`, `Developing`, `Corroborated`, `Verified`, `Disputed`, or `False` label when the label, uncertainty, and publication rationale are explicit. The safety gate—not confidence alone—controls whether publication is permitted.
 
 Confidence uses labels instead of a misleading universal score:
 
