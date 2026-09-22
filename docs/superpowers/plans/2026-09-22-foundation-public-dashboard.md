@@ -534,7 +534,7 @@ describe("filterIncidents", () => {
 Run:
 
 ~~~bash
-pnpm --filter @syosint/public-dashboard test -- src/lib
+pnpm exec vitest run apps/public-dashboard/src/lib
 ~~~
 
 Expected: FAIL because the dashboard package, dataset, and functions do not exist.
@@ -560,7 +560,7 @@ filter-incidents.ts must normalize search with trim().toLocaleLowerCase(), searc
 Run:
 
 ~~~bash
-pnpm --filter @syosint/public-dashboard test -- src/lib
+pnpm exec vitest run apps/public-dashboard/src/lib
 ~~~
 
 Expected: loader and filter tests PASS.
@@ -1109,11 +1109,13 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
+GITHUB_ACTIONS=true pnpm build
+grep -E '(/syOSINT/_next/|href="/syOSINT/)' apps/public-dashboard/out/index.html
 git grep -n -E "api_hash|api_id|\.session|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY" -- . ':!docs/superpowers'
 git status --short
 ~~~
 
-Expected: all commands PASS; grep returns no credential material; git status lists only intended plan implementation changes before the final commit.
+Expected: all commands PASS; the exported HTML contains /syOSINT/ asset or navigation paths; the credential grep returns no material; git status lists only intended plan implementation changes before the final commit.
 
 - [ ] **Step 7: Commit automation and documentation**
 
