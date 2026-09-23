@@ -1,6 +1,6 @@
 # Milestone 3 — RSS Collection and Public News Wire
 
-**Status:** Approved conversational design, pending written-spec review
+**Status:** Approved
 
 **Date:** 2026-09-23
 
@@ -119,9 +119,12 @@ The repository contains a versioned allowlist with these fields:
 - source homepage URL;
 - primary language;
 - enabled status; and
+- one or more deterministic Syria-topic terms when the feed covers a broader region; and
 - optional attribution note.
 
 Only reviewed entries committed to this allowlist can enter the public wire. The private analyst source registry may contain additional experimental feeds, but those sources do not become public automatically.
+
+For a broad regional feed, an item enters the Syria wire only when its normalized headline contains at least one configured topic term, using Unicode-aware case-insensitive matching. The initial English terms are `Syria` and `Syrian`; the initial Arabic terms are `سوريا`, `سوري` and `سورية`. Topic filtering is transparent configuration, not an AI classifier, and the methodology documents that a headline-only rule can miss indirectly worded reports.
 
 Feed URLs and redirects must remain public HTTPS resources. Credentials, URL fragments, nonstandard ports, IP literals, localhost names and private, link-local, loopback or otherwise non-public network destinations are rejected. DNS results are checked before connection and after redirects to reduce server-side request forgery and DNS-rebinding risk.
 
@@ -235,6 +238,7 @@ Required coverage includes:
 - independent source failures and partial success;
 - retention, ordering and last-valid-dataset behavior;
 - public allowlist and schema validation;
+- Unicode-aware English and Arabic topic filtering for broad feeds;
 - absence of descriptions, bodies and private fields from public JSON;
 - analyst inbox states and idempotent promotion;
 - bilingual public rendering, filtering, stale state and external-link safety;
