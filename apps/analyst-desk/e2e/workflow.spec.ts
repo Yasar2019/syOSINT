@@ -11,6 +11,8 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await page.getByLabel("العنوان بالعربية").fill("انقطاع تجريبي");
   await page.getByRole("button", { name: "Create incident" }).click();
   await expect(page).toHaveURL(/\/incident\/\d+/);
+  const caseId = Number(page.url().match(/\/incident\/(\d+)/)?.[1]);
+  const readCase = async () => (await (await page.request.get(`http://127.0.0.1:8765/incidents/${caseId}`)).json()) as { state: string; summary_en?: string; review?: { human_approved?: boolean } };
   await page.getByLabel("Exact public report URL").fill("https://example.org/report");
   await page.getByLabel("Original text (private only)").fill("LOCAL PRIVATE REPORT");
   await page.getByRole("button", { name: "Attach evidence" }).click();
@@ -24,15 +26,14 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await page.getByLabel("الموقع العام · عربي").fill("سوريا");
   await page.getByLabel("Event time · ISO UTC").fill("2026-09-23T10:00:00Z");
   await page.getByRole("button", { name: "Save public fields" }).click();
+  await expect.poll(async () => (await readCase()).summary_en).toBe("An outage was reported.");
   await page.getByLabel("Reason for transition").fill("Initial triage completed");
   await page.getByRole("button", { name: "Move to investigating" }).click();
-  const caseId = Number(page.url().match(/\/incident\/(\d+)/)?.[1]);
-  const apiState = await (await page.request.get(`http://127.0.0.1:8765/incidents/${caseId}`)).json();
-  console.log("After investigating action, API state:", apiState.state, "page button:", await page.getByRole("button", { name: /Move to/ }).allTextContents());
+  await expect.poll(async () => (await readCase()).state).toBe("investigating");
   await expect(page.getByRole("button", { name: "Move to review-ready" })).toBeVisible();
   await page.getByLabel("Reason for transition").fill("Evidence assessed locally");
   await page.getByRole("button", { name: "Move to review-ready" }).click();
-  console.log("Review transition page:", page.url(), "alerts:", await page.getByRole("alert").allTextContents());
+  await expect.poll(async () => (await readCase()).state).toBe("review-ready");
   await expect(page.getByRole("button", { name: "Move to approved" })).toBeVisible();
 
   await page.getByLabel("Written rationale").fill("One original reference; claim remains unverified.");
@@ -40,8 +41,10 @@ test("review and export a synthetic case through the private desk", async ({ pag
     await page.getByLabel(label).check();
   }
   await page.getByRole("button", { name: "Record review" }).click();
+  await expect.poll(async () => (await readCase()).review?.human_approved).toBe(true);
   await page.getByLabel("Reason for transition").fill("Publication check complete");
   await page.getByRole("button", { name: "Move to approved" }).click();
+  await expect.poll(async () => (await readCase()).state).toBe("approved");
 
   const preview = page.locator(".preview pre");
   await expect(preview).toContainText("An outage was reported.");
