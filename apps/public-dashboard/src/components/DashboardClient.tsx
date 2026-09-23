@@ -58,7 +58,7 @@ export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
         generatedAt={dataset.generatedAt}
         onLocaleChange={setLocale}
       />
-      <DemoBanner dictionary={dictionary} />
+      {dataset.synthetic && <DemoBanner dictionary={dictionary} />}
       <main id="main-content">
         <SummaryCards incidents={incidents} dictionary={dictionary} />
         <FilterBar

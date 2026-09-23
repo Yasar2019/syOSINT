@@ -54,6 +54,6 @@ export interface PublicIncident {
 export interface PublicDataset {
   schemaVersion: "1.0.0";
   generatedAt: string;
-  synthetic: true;
+  synthetic: boolean;
   incidents: PublicIncident[];
 }

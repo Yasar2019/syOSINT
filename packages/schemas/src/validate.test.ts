@@ -68,8 +68,8 @@ describe("validatePublicDataset", () => {
     },
   );
 
-  it("rejects a dataset that is not explicitly synthetic", () => {
-    expect(validatePublicDataset({ ...valid, synthetic: false }).ok).toBe(false);
+  it("accepts a gated production dataset while keeping synthetic fixtures labeled", () => {
+    expect(validatePublicDataset({ ...valid, synthetic: false }).ok).toBe(true);
   });
 
   it("rejects duplicate incident identifiers", () => {

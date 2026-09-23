@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {"jsx": "preserve", "lib": ["dom", "dom.iterable", "es2023"], "plugins": [{"name": "next"}], "types": ["node", "vitest/globals"]},
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".next", "test-results", "playwright-report"]
+}

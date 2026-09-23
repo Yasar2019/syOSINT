@@ -2,7 +2,7 @@
 
 syOSINT is an open-source, bilingual situational-awareness workspace for journalists and OSINT researchers monitoring public reporting about Syria. It is designed around traceable evidence, human verification, explicit uncertainty, and safety-aware publication.
 
-> **Current milestone:** The repository contains a working public dashboard with clearly marked synthetic demonstration data. It does not collect live sources.
+> **Current milestone:** The public dashboard uses clearly marked synthetic demonstration data. Milestone 2 adds a private local analyst desk for manual source references, evidence review and staged public export. It does not collect live sources.
 
 ## Principles
 
@@ -21,17 +21,24 @@ syOSINT is an open-source, bilingual situational-awareness workspace for journal
 - Bundled Natural Earth-derived Syria geometry with no map tile or paid service calls.
 - Strict public-data validation and synthetic fixtures covering all confidence labels and incident categories.
 - Automated unit, policy, browser, static-export, and GitHub Pages checks.
+- Local SQLite evidence and audit trail, human safety review, exact sanitized preview, and explicit staged JSON export.
 
 ## Architecture
 
 The public side is a statically exported Next.js application that consumes only a validated, versioned JSON dataset. Map geometry is bundled at build time. There is no dashboard backend and no client-side request to an external data or map service.
 
-Later milestones add a local-only analyst desk, SQLite evidence vault, source registry, RSS collection, a terms-compliant public Telegram adapter, and an explicit safety-gated export step. Raw evidence never enters the static dashboard or Git repository.
+The local-only FastAPI service owns SQLite evidence and the human-gated export. The separate local Next.js desk calls the service server-side. Later milestones add RSS collection and a terms-compliant public Telegram adapter. Raw evidence never enters the static dashboard or Git repository.
 
 The approved documents are:
 
 - [Product and architecture design](docs/superpowers/specs/2026-09-22-syosint-design.md)
 - [Foundation and dashboard implementation plan](docs/superpowers/plans/2026-09-22-foundation-public-dashboard.md)
+- [Current project state](docs/PROJECT_STATE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Architectural decisions](docs/DECISIONS.md)
+- [Agent handoff procedure](docs/AGENT_HANDOFF.md)
+- [Analyst desk design](docs/superpowers/specs/2026-09-23-analyst-desk-design.md)
+- [Analyst desk implementation plan](docs/superpowers/plans/2026-09-23-analyst-desk.md)
 
 ## Development
 
@@ -45,6 +52,9 @@ corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm test
 corepack pnpm build
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e './services/collector-api[test]'
+PYTHONPATH=services/collector-api .venv/bin/python -m pytest services/collector-api/tests -q
 ```
 
 Run the dashboard locally:
@@ -52,6 +62,20 @@ Run the dashboard locally:
 ```bash
 corepack pnpm --dir apps/public-dashboard dev
 ```
+
+Run the **private desk** in two terminals from the repository root:
+
+```bash
+PYTHONPATH=services/collector-api .venv/bin/python -m syosint
+```
+
+```bash
+corepack pnpm --filter @syosint/analyst-desk dev
+```
+
+Open `http://127.0.0.1:3001`. Both processes listen on loopback only, and the API checks the local Host and mutation Origin. The API documentation is available locally at `http://127.0.0.1:8765/docs`. SQLite stays under gitignored `private-data/`. Back up that directory privately if you need to preserve evidence. An export writes a single-incident, schema-validated JSON dataset to gitignored `pending-exports/incident-ID.json`; it does **not** publish or change the live public dashboard. Exact coordinates are excluded from this release. You must separately review and intentionally publish approved data. Never commit source text, private notes, or local database files.
+
+To exercise the workflow: register a public HTTPS source, create a bilingual case, attach a public report reference and local evidence, complete all public fields, move through `investigating` and `review-ready`, record human verification and safety checks, move to `approved`, examine the exact preview, and explicitly export. The desk deliberately locks approved cases against further evidence edits. Correction and withdrawal workflows remain future work; don't use this prototype to publish events needing changes after approval.
 
 Browser verification requires a local Chromium installation:
 
@@ -72,7 +96,7 @@ After merging to `main`, select **Settings → Pages → Source → GitHub Actio
 
 ## Roadmap
 
-The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. The [foundation and public dashboard plan](docs/superpowers/plans/2026-09-22-foundation-public-dashboard.md) records this first implementation slice. Collector, analyst-desk, and live-data work is deliberately deferred.
+The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. Live RSS and Telegram collection are later milestones; the private desk accepts manual public references only.
 
 ## License
 
