@@ -35,9 +35,11 @@ Milestone 2 will add the private, localhost-only analyst workflow described in t
 
 No RSS or Telegram collection belongs in Milestone 2. Those are later milestones.
 
-### Work in progress on `feat/analyst-desk`
+### Review checkpoint on `feat/analyst-desk`
 
-A local API, SQLite migration, manual source/evidence intake, audit trail, review gate, public preview/export and local Next.js desk are under implementation. The checked-in public dashboard remains synthetic. A staged export remains in `pending-exports/` and never auto-publishes. Corrections and withdrawals, production data publication tooling, and full UI/browser verification remain to complete before Milestone 2 can be declared finished.
+Draft PR #2 contains the local API, SQLite migration, manual source/evidence intake, audit trail, review gate, public preview/export, and local Next.js desk. A synthetic case passes through the desk's entire intake-to-export flow in CI. The checked-in public dashboard remains synthetic. A staged export remains in `pending-exports/` and never auto-publishes.
+
+CI run #8 on the PR passed repository policy, lint, type checks, 41 JavaScript tests, five API tests, both builds, three public Chromium tests, and the private workflow Chromium test. Milestone 2 awaits PR review and integration. An editorial procedure for publishing a real dataset must be agreed separately before replacing demonstration data. Correction and withdrawal tooling is Milestone 5 scope.
 
 Active plan: `docs/superpowers/plans/2026-09-23-analyst-desk.md`; narrowed design: `docs/superpowers/specs/2026-09-23-analyst-desk-design.md`.
 
