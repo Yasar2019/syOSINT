@@ -28,6 +28,8 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await page.getByRole("button", { name: "Move to investigating" }).click();
   await page.getByLabel("Reason for transition").fill("Evidence assessed locally");
   await page.getByRole("button", { name: "Move to review-ready" }).click();
+  console.log("Review transition page:", page.url(), "alerts:", await page.getByRole("alert").allTextContents());
+  await expect(page.getByRole("button", { name: "Move to approved" })).toBeVisible();
 
   await page.getByLabel("Written rationale").fill("One original reference; claim remains unverified.");
   for (const label of ["Source independence assessed", "Time consistency assessed", "Location consistency assessed", "Contradictions assessed", "No ordinary-person identification or exposed civilians", "No active tactical positions, routes, shelters or medical sites", "Remaining uncertainty and contradictions acknowledged", "I personally reviewed this case for publication"]) {
