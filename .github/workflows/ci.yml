@@ -36,6 +36,18 @@ jobs:
         run: pnpm typecheck
       - name: Run unit tests
         run: pnpm test
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: services/collector-api/pyproject.toml
+      - name: Install local API
+        run: python -m pip install -e './services/collector-api[test]'
+      - name: Run API tests
+        run: pnpm test:api
+      - name: Build local analyst desk
+        run: pnpm build:desk
       - name: Build static dashboard
         run: pnpm build
       - name: Install Chromium

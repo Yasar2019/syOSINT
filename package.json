@@ -11,6 +11,8 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
+    "test:api": "python -m pytest services/collector-api/tests -q",
+    "build:desk": "pnpm --filter @syosint/analyst-desk build",
     "test:e2e": "pnpm --filter @syosint/public-dashboard test:e2e",
     "policy:check": "secretlint \"**/*\" --secretlintignore .gitignore"
   },

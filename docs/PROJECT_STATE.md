@@ -35,6 +35,12 @@ Milestone 2 will add the private, localhost-only analyst workflow described in t
 
 No RSS or Telegram collection belongs in Milestone 2. Those are later milestones.
 
+### Work in progress on `feat/analyst-desk`
+
+A local API, SQLite migration, manual source/evidence intake, audit trail, review gate, public preview/export and local Next.js desk are under implementation. The checked-in public dashboard remains synthetic. A staged export remains in `pending-exports/` and never auto-publishes. Corrections and withdrawals, production data publication tooling, and full UI/browser verification remain to complete before Milestone 2 can be declared finished.
+
+Active plan: `docs/superpowers/plans/2026-09-23-analyst-desk.md`; narrowed design: `docs/superpowers/specs/2026-09-23-analyst-desk-design.md`.
+
 ## Safety invariants
 
 These constraints apply to all future work:
