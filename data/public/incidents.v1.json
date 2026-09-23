@@ -66,13 +66,19 @@
         "en": "The synthetic reports may share an upstream source.",
         "ar": "قد يشترك التقريران التجريبيان في مصدر أساسي واحد."
       },
-      "sourceCount": 1,
+      "sourceCount": 2,
       "sources": [
         {
           "id": "demo-source-b",
           "label": { "en": "Synthetic service bulletin", "ar": "نشرة خدمات تجريبية" },
           "url": "https://example.com/syosint/demo-source-b",
           "publishedAt": "2026-09-22T14:10:00Z"
+        },
+        {
+          "id": "demo-source-b2",
+          "label": { "en": "Synthetic field service report", "ar": "تقرير خدمات ميداني تجريبي" },
+          "url": "https://example.com/syosint/demo-source-b2",
+          "publishedAt": "2026-09-22T14:18:00Z"
         }
       ],
       "corrections": []
@@ -103,13 +109,19 @@
         "en": "The duration remains unspecified in the synthetic evidence.",
         "ar": "لا تزال المدة غير محددة في الأدلة التجريبية."
       },
-      "sourceCount": 1,
+      "sourceCount": 2,
       "sources": [
         {
           "id": "demo-source-c",
           "label": { "en": "Synthetic humanitarian bulletin", "ar": "نشرة إنسانية تجريبية" },
           "url": "https://example.com/syosint/demo-source-c",
           "publishedAt": "2026-09-22T11:30:00Z"
+        },
+        {
+          "id": "demo-source-c2",
+          "label": { "en": "Independent synthetic service notice", "ar": "إشعار خدمات تجريبي مستقل" },
+          "url": "https://example.com/syosint/demo-source-c2",
+          "publishedAt": "2026-09-22T11:42:00Z"
         }
       ],
       "corrections": [
@@ -149,13 +161,19 @@
         "en": "This is training data; no real crossing schedule is described.",
         "ar": "هذه بيانات تدريبية ولا تصف أي جدول حقيقي للمعابر."
       },
-      "sourceCount": 1,
+      "sourceCount": 2,
       "sources": [
         {
           "id": "demo-source-d",
           "label": { "en": "Synthetic administrative notice", "ar": "إشعار إداري تجريبي" },
           "url": "https://example.com/syosint/demo-source-d",
           "publishedAt": "2026-09-22T09:05:00Z"
+        },
+        {
+          "id": "demo-source-d2",
+          "label": { "en": "Independent synthetic verification log", "ar": "سجل تحقق تجريبي مستقل" },
+          "url": "https://example.com/syosint/demo-source-d2",
+          "publishedAt": "2026-09-22T09:35:00Z"
         }
       ],
       "corrections": []

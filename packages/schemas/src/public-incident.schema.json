@@ -28,6 +28,10 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["en", "ar", "precision"],
+      "dependentRequired": {
+        "latitude": ["longitude"],
+        "longitude": ["latitude"]
+      },
       "properties": {
         "en": { "type": "string", "minLength": 1 },
         "ar": { "type": "string", "minLength": 1 },
@@ -36,7 +40,23 @@
         "precision": {
           "enum": ["country", "governorate", "district", "withheld"]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "precision": { "enum": ["country", "withheld"] }
+            },
+            "required": ["precision"]
+          },
+          "then": {
+            "properties": {
+              "latitude": false,
+              "longitude": false
+            }
+          }
+        }
+      ]
     },
     "source": {
       "type": "object",

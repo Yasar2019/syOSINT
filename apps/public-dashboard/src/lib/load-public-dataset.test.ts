@@ -33,4 +33,16 @@ describe("loadPublicDataset", () => {
     expect(dataset.incidents.every((item) => item.title.en.startsWith("[DEMO]"))).toBe(true);
     expect(dataset.incidents.every((item) => item.title.ar.startsWith("[تجريبي]"))).toBe(true);
   });
+
+  it.each(["developing", "corroborated", "verified"])(
+    "provides two visible demonstration references for %s claims",
+    (confidence) => {
+      const incident = loadPublicDataset().incidents.find(
+        (candidate) => candidate.confidence === confidence,
+      );
+
+      expect(incident?.sourceCount).toBe(2);
+      expect(incident?.sources).toHaveLength(2);
+    },
+  );
 });

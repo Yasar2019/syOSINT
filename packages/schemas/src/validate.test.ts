@@ -81,4 +81,35 @@ describe("validatePublicDataset", () => {
       errors: ["incident ids must be unique"],
     });
   });
+
+  it.each(["country", "withheld"])(
+    "rejects coordinates when public precision is %s",
+    (precision) => {
+      const input = structuredClone(valid);
+      input.incidents[0].location.precision = precision;
+
+      expect(validatePublicDataset(input).ok).toBe(false);
+    },
+  );
+
+  it("rejects an incomplete coordinate pair", () => {
+    const input = structuredClone(valid);
+    delete (input.incidents[0].location as { longitude?: number }).longitude;
+
+    expect(validatePublicDataset(input).ok).toBe(false);
+  });
+
+  it("rejects a source count smaller than the public references", () => {
+    const input = structuredClone(valid);
+    input.incidents[0].sources.push({
+      ...structuredClone(input.incidents[0].sources[0]),
+      id: "demo-source-2",
+      url: "https://example.com/demo-2",
+    });
+
+    expect(validatePublicDataset(input)).toEqual({
+      ok: false,
+      errors: ["incident demo-001 sourceCount cannot be smaller than sources.length"],
+    });
+  });
 });

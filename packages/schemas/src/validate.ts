@@ -26,5 +26,17 @@ export function validatePublicDataset(value: unknown): ValidationResult {
     return { ok: false, errors: ["incident ids must be unique"] };
   }
 
+  const inconsistentSources = value.incidents.find(
+    (incident) => incident.sourceCount < incident.sources.length,
+  );
+  if (inconsistentSources) {
+    return {
+      ok: false,
+      errors: [
+        `incident ${inconsistentSources.id} sourceCount cannot be smaller than sources.length`,
+      ],
+    };
+  }
+
   return { ok: true, data: value };
 }
