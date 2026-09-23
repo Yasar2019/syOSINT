@@ -54,6 +54,8 @@ jobs:
         run: pnpm --filter @syosint/public-dashboard exec playwright install --with-deps chromium
       - name: Run browser tests
         run: pnpm test:e2e
+      - name: Run analyst desk browser workflow
+        run: pnpm --filter @syosint/analyst-desk test:e2e
       - name: Upload browser report on failure
         if: failure()
         uses: actions/upload-artifact@v4
