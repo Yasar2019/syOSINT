@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-09-22T16:00:00Z",
+  "synthetic": true,
+  "incidents": [
+    {
+      "id": "demo-armed-conflict-001",
+      "status": "published",
+      "categories": ["armed-conflict"],
+      "confidence": "unverified",
+      "occurredAt": "2026-09-22T15:30:00Z",
+      "updatedAt": "2026-09-22T15:45:00Z",
+      "location": {
+        "en": "Synthetic Northwest Sector",
+        "ar": "القطاع الشمالي الغربي التجريبي",
+        "latitude": 35.9,
+        "longitude": 36.4,
+        "precision": "governorate"
+      },
+      "title": {
+        "en": "[DEMO] Unverified security exercise report",
+        "ar": "[تجريبي] تقرير غير متحقق لتمرين أمني"
+      },
+      "summary": {
+        "en": "A fictional single-source record demonstrates the unverified review state.",
+        "ar": "سجل خيالي من مصدر واحد يوضح حالة المراجعة غير المتحققة."
+      },
+      "uncertainty": {
+        "en": "No independent synthetic source has corroborated this demonstration claim.",
+        "ar": "لم يؤكد أي مصدر تجريبي مستقل هذا الادعاء التوضيحي."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-a",
+          "label": { "en": "Synthetic field feed A", "ar": "موجز ميداني تجريبي أ" },
+          "url": "https://example.com/syosint/demo-source-a",
+          "publishedAt": "2026-09-22T15:30:00Z"
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "demo-infrastructure-002",
+      "status": "published",
+      "categories": ["infrastructure"],
+      "confidence": "developing",
+      "occurredAt": "2026-09-22T14:00:00Z",
+      "updatedAt": "2026-09-22T14:40:00Z",
+      "location": {
+        "en": "Synthetic Central District",
+        "ar": "المنطقة الوسطى التجريبية",
+        "latitude": 34.8,
+        "longitude": 37.1,
+        "precision": "district"
+      },
+      "title": {
+        "en": "[DEMO] Developing infrastructure interruption exercise",
+        "ar": "[تجريبي] تمرين متطور لانقطاع البنية التحتية"
+      },
+      "summary": {
+        "en": "Two fictional reports describe a demonstration power interruption with details still under review.",
+        "ar": "يصف تقريران خياليان انقطاعاً تجريبياً للكهرباء وما تزال التفاصيل قيد المراجعة."
+      },
+      "uncertainty": {
+        "en": "The synthetic reports may share an upstream source.",
+        "ar": "قد يشترك التقريران التجريبيان في مصدر أساسي واحد."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-b",
+          "label": { "en": "Synthetic service bulletin", "ar": "نشرة خدمات تجريبية" },
+          "url": "https://example.com/syosint/demo-source-b",
+          "publishedAt": "2026-09-22T14:10:00Z"
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "demo-humanitarian-003",
+      "status": "corrected",
+      "categories": ["humanitarian"],
+      "confidence": "corroborated",
+      "occurredAt": "2026-09-22T11:15:00Z",
+      "updatedAt": "2026-09-22T13:20:00Z",
+      "location": {
+        "en": "Synthetic Eastern Area",
+        "ar": "المنطقة الشرقية التجريبية",
+        "latitude": 35.1,
+        "longitude": 40.0,
+        "precision": "governorate"
+      },
+      "title": {
+        "en": "[DEMO] Corroborated humanitarian logistics exercise",
+        "ar": "[تجريبي] تمرين مؤكد لمتابعة الخدمات الإنسانية"
+      },
+      "summary": {
+        "en": "Independent fictional bulletins corroborate a demonstration change to service availability.",
+        "ar": "تؤكد نشرات خيالية مستقلة تغييراً تجريبياً في توفر الخدمات."
+      },
+      "uncertainty": {
+        "en": "The duration remains unspecified in the synthetic evidence.",
+        "ar": "لا تزال المدة غير محددة في الأدلة التجريبية."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-c",
+          "label": { "en": "Synthetic humanitarian bulletin", "ar": "نشرة إنسانية تجريبية" },
+          "url": "https://example.com/syosint/demo-source-c",
+          "publishedAt": "2026-09-22T11:30:00Z"
+        }
+      ],
+      "corrections": [
+        {
+          "correctedAt": "2026-09-22T13:20:00Z",
+          "reason": {
+            "en": "Synthetic correction clarified the affected service category.",
+            "ar": "أوضح التصحيح التجريبي فئة الخدمة المتأثرة."
+          },
+          "changedFields": ["summary"]
+        }
+      ]
+    },
+    {
+      "id": "demo-border-004",
+      "status": "published",
+      "categories": ["border-crossing"],
+      "confidence": "verified",
+      "occurredAt": "2026-09-22T09:00:00Z",
+      "updatedAt": "2026-09-22T10:10:00Z",
+      "location": {
+        "en": "Synthetic Southern Administrative Area",
+        "ar": "المنطقة الإدارية الجنوبية التجريبية",
+        "latitude": 32.9,
+        "longitude": 36.0,
+        "precision": "governorate"
+      },
+      "title": {
+        "en": "[DEMO] Verified crossing-hours exercise",
+        "ar": "[تجريبي] تمرين متحقق لتغيير ساعات المعبر"
+      },
+      "summary": {
+        "en": "A fictional primary notice and independent demonstration check support a change in operating hours.",
+        "ar": "يدعم إشعار أولي خيالي وتحقق تجريبي مستقل تغييراً في ساعات العمل."
+      },
+      "uncertainty": {
+        "en": "This is training data; no real crossing schedule is described.",
+        "ar": "هذه بيانات تدريبية ولا تصف أي جدول حقيقي للمعابر."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-d",
+          "label": { "en": "Synthetic administrative notice", "ar": "إشعار إداري تجريبي" },
+          "url": "https://example.com/syosint/demo-source-d",
+          "publishedAt": "2026-09-22T09:05:00Z"
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "demo-political-005",
+      "status": "withdrawn",
+      "categories": ["political-security"],
+      "confidence": "disputed",
+      "occurredAt": "2026-09-21T20:00:00Z",
+      "updatedAt": "2026-09-22T08:00:00Z",
+      "location": {
+        "en": "Location withheld for demonstration",
+        "ar": "الموقع محجوب لأغراض العرض",
+        "precision": "withheld"
+      },
+      "title": {
+        "en": "[DEMO] Disputed political statement exercise",
+        "ar": "[تجريبي] تمرين لبيان سياسي متنازع عليه"
+      },
+      "summary": {
+        "en": "A fictional claim was withdrawn after contradictory demonstration evidence appeared.",
+        "ar": "سُحب ادعاء خيالي بعد ظهور أدلة تجريبية متناقضة."
+      },
+      "uncertainty": {
+        "en": "The original synthetic claim cannot be supported.",
+        "ar": "لا يمكن دعم الادعاء التجريبي الأصلي."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-e",
+          "label": { "en": "Synthetic statement archive", "ar": "أرشيف بيانات تجريبي" },
+          "url": "https://example.com/syosint/demo-source-e",
+          "publishedAt": "2026-09-21T20:00:00Z"
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "demo-disinformation-006",
+      "status": "published",
+      "categories": ["disinformation"],
+      "confidence": "false",
+      "occurredAt": "2026-09-21T17:00:00Z",
+      "updatedAt": "2026-09-22T07:30:00Z",
+      "location": {
+        "en": "Syria-wide synthetic exercise",
+        "ar": "تمرين تجريبي على مستوى سوريا",
+        "precision": "country"
+      },
+      "title": {
+        "en": "[DEMO] False recycled-media claim exercise",
+        "ar": "[تجريبي] تمرين لادعاء زائف يعتمد وسائط معاد تدويرها"
+      },
+      "summary": {
+        "en": "A fictional verification record demonstrates how older media can contradict a claimed event date.",
+        "ar": "يوضح سجل تحقق خيالي كيف يمكن لوسائط أقدم أن تناقض تاريخ حدث مزعوم."
+      },
+      "uncertainty": {
+        "en": "The example contains no real media and makes no claim about an actual event.",
+        "ar": "لا يحتوي المثال على وسائط حقيقية ولا يقدم ادعاءً عن حدث فعلي."
+      },
+      "sourceCount": 1,
+      "sources": [
+        {
+          "id": "demo-source-f",
+          "label": { "en": "Synthetic verification note", "ar": "مذكرة تحقق تجريبية" },
+          "url": "https://example.com/syosint/demo-source-f",
+          "publishedAt": "2026-09-22T07:30:00Z"
+        }
+      ],
+      "corrections": []
+    }
+  ]
+}
