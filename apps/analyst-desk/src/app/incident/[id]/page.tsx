@@ -10,6 +10,7 @@ const checks = [
   ["location_checked", "Location consistency assessed"], ["contradictions_checked", "Contradictions assessed"],
   ["person_safety_checked", "No ordinary-person identification or exposed civilians"],
   ["operational_safety_checked", "No active tactical positions, routes, shelters or medical sites"],
+  ["primary_evidence_checked", "Primary evidence assessed (required for Verified)"],
   ["contradictions_acknowledged", "Remaining uncertainty and contradictions acknowledged"],
 ] as const;
 

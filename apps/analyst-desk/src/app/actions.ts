@@ -60,7 +60,7 @@ export async function review(form: FormData) {
   let incidentId = 0;
   try {
     incidentId = id(form);
-    const keys = ["independence_checked", "time_checked", "location_checked", "contradictions_checked", "person_safety_checked", "operational_safety_checked", "contradictions_acknowledged", "human_approved"];
+    const keys = ["independence_checked", "time_checked", "location_checked", "contradictions_checked", "person_safety_checked", "operational_safety_checked", "contradictions_acknowledged", "human_approved", "primary_evidence_checked"];
     const flags = Object.fromEntries(keys.map((key) => [key, form.get(key) === "on"]));
     await api(`/incidents/${incidentId}/review`, "POST", { rationale: value(form, "rationale"), ...flags });
   } catch (error) { failure(error); }

@@ -15,9 +15,9 @@ A single journalist or OSINT researcher can manually register public sources and
 
 ## Workflow
 
-Lifecycle: `triage → investigating → review-ready → approved → published`; corrections and withdrawals preserve revisions. A source must be a public HTTPS reference. Evidence carries a source URL, original text stored locally, source time, and hash; no original text is in the public record. Every change records action, entity, before/after digest, timestamp, and reason if required.
+The local lifecycle is `triage → investigating → review-ready → approved`. Publication, correction, and withdrawal workflows belong to a later milestone. A source must be a public HTTPS reference. Evidence carries a source URL, original text stored locally, source time, and hash; no original text is in the public record. Every change records action, entity, before/after digest, timestamp, and reason if required.
 
-An incident must have two human-written titles and summaries, categories, source references, uncertainty text, rationale, an explicit checklist covering independence, time, location, contradictions and person/safety risk, and public precision at most governorate/district as applicable. Precise or operationally sensitive coordinates and routes are suppressed. Approval requires checklist completion and a recorded reviewer acknowledgment. Preview builds the exact sanitized record and validates it. Export is a separate explicit action, reevaluates gates, and writes to a gitignored local path atomically. A withdrawn incident is not exportable as a fresh claim.
+An incident must have two human-written titles and summaries, categories, source references, uncertainty text, rationale, an explicit checklist covering independence, time, location, contradictions and person/safety risk, and a safe public location label. Exact coordinates are rejected and omitted from every Milestone 2 export. Corroborated requires two distinct registered sources; Verified also requires a documented primary-evidence assessment. Evidence URLs must belong to the registered source hostname or its subdomain. Approval requires checklist completion and a recorded reviewer acknowledgment. Preview builds the exact sanitized record and validates it. Export is a separate explicit action, reevaluates gates, and writes to a gitignored local path atomically.
 
 ## Failure behavior and tests
 

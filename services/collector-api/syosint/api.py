@@ -5,9 +5,11 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .db import database, record
 from .export import build_public_record, write_export
@@ -108,6 +110,7 @@ class ReviewInput(Strict):
     operational_safety_checked: bool
     contradictions_acknowledged: bool
     human_approved: bool
+    primary_evidence_checked: bool = False
 
 
 class TransitionInput(Strict):
@@ -122,7 +125,15 @@ class ExportInput(Strict):
 def create_app(database_url: str, export_dir: Path) -> FastAPI:
     engine = database(database_url)
     app = FastAPI(title="syOSINT local analyst API")
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
     app.state.export_dir = export_dir
+
+    @app.middleware("http")
+    async def enforce_local_origin(request, call_next):
+        origin = request.headers.get("origin")
+        if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin not in ("http://127.0.0.1:3001", "http://localhost:3001"):
+            return JSONResponse({"detail": "Untrusted origin"}, status_code=403)
+        return await call_next(request)
 
     def session():
         with Session(engine) as db:
@@ -171,8 +182,8 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         if incident.state in ("approved", "published", "withdrawn"):
             raise HTTPException(409, "Approved incident is locked; use a correction workflow")
         fields = item.model_dump(mode="json", exclude_none=True)
-        if ("latitude" in fields) != ("longitude" in fields) or (fields["precision"] in ("country", "withheld") and "latitude" in fields):
-            raise HTTPException(422, "Unsafe or incomplete public coordinates")
+        if "latitude" in fields or "longitude" in fields:
+            raise HTTPException(422, "Exact coordinates cannot be included in this release")
         before = incident.fields
         incident.fields = fields
         incident.review = {}
@@ -243,8 +254,13 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     @app.post("/incidents/{incident_id}/evidence", status_code=201)
     def add_evidence(incident_id: int, item: EvidenceInput, db: Session = Depends(session)):
         incident = db.get(Incident, incident_id)
-        if not incident or not db.get(Source, item.source_id):
+        source = db.get(Source, item.source_id)
+        if not incident or not source:
             raise HTTPException(404, "Incident or source not found")
+        source_host = urlsplit(source.url).hostname or ""
+        reference_host = urlsplit(item.url).hostname or ""
+        if reference_host != source_host and not reference_host.endswith("." + source_host):
+            raise HTTPException(422, "Evidence URL must belong to its registered public source")
         if incident.state in ("approved", "published", "withdrawn"):
             raise HTTPException(409, "Approved incident is locked")
         incident.review = {}
@@ -252,7 +268,7 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         evidence = Evidence(incident_id=incident_id, **item.model_dump(), digest=hashlib.sha256(item.text.encode()).hexdigest())
         db.add(evidence)
         db.flush()
-        record(db, "evidence.created", "evidence", evidence.id, after={"digest": evidence.digest, "incident_id": incident_id})
+        record(db, "evidence.created", "evidence", evidence.id, after={"digest": evidence.digest, "incident_id": incident_id, "source_id": item.source_id, "url": item.url, "published_at": item.published_at})
         db.commit()
         return {"id": evidence.id, "digest": evidence.digest}
 

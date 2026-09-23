@@ -26,13 +26,19 @@ def build_public_record(db: Session, incident: Incident) -> dict:
         raise HTTPException(409, "Safety and verification checklist incomplete")
     if fields.get("precision") not in ("country", "governorate", "district", "withheld"):
         raise HTTPException(409, "Public location precision missing")
-    if fields.get("precision") in ("country", "withheld") and ("latitude" in fields or "longitude" in fields):
-        raise HTTPException(409, "Coordinates forbidden for country or withheld precision")
-    if ("latitude" in fields) != ("longitude" in fields):
-        raise HTTPException(409, "Coordinate pair incomplete")
+    if "latitude" in fields or "longitude" in fields:
+        raise HTTPException(409, "Exact coordinates cannot enter public export")
     evidence = db.scalars(select(Evidence).where(Evidence.incident_id == incident.id).order_by(Evidence.id)).all()
     if not evidence:
         raise HTTPException(409, "At least one public source reference required")
+    confidence = fields["confidence"]
+    unique_sources = {item.source_id for item in evidence}
+    if confidence == "developing" and len(evidence) < 2:
+        raise HTTPException(409, "Developing requires multiple reports")
+    if confidence in ("corroborated", "verified") and len(unique_sources) < 2:
+        raise HTTPException(409, "This confidence label requires independent sources")
+    if confidence == "verified" and not review.get("primary_evidence_checked"):
+        raise HTTPException(409, "Verified requires a documented primary-evidence assessment")
     sources = []
     for item in evidence:
         source = db.get(Source, item.source_id)
@@ -40,8 +46,6 @@ def build_public_record(db: Session, incident: Incident) -> dict:
             raise HTTPException(409, "Source reference unavailable")
         sources.append({"id": str(item.id), "label": {"en": source.name, "ar": source.name}, "url": item.url, "publishedAt": item.published_at})
     location = {"en": fields["location_en"], "ar": fields["location_ar"], "precision": fields["precision"]}
-    if "latitude" in fields:
-        location.update(latitude=fields["latitude"], longitude=fields["longitude"])
     record = {
         "id": f"incident-{incident.id}", "status": "published", "categories": [fields["category"]],
         "confidence": fields["confidence"], "occurredAt": fields["occurred_at"],
