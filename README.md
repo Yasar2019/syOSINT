@@ -32,6 +32,10 @@ The approved documents are:
 
 - [Product and architecture design](docs/superpowers/specs/2026-09-22-syosint-design.md)
 - [Foundation and dashboard implementation plan](docs/superpowers/plans/2026-09-22-foundation-public-dashboard.md)
+- [Current project state](docs/PROJECT_STATE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Architectural decisions](docs/DECISIONS.md)
+- [Agent handoff procedure](docs/AGENT_HANDOFF.md)
 
 ## Development
 
