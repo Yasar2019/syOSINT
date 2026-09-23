@@ -26,6 +26,10 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await page.getByRole("button", { name: "Save public fields" }).click();
   await page.getByLabel("Reason for transition").fill("Initial triage completed");
   await page.getByRole("button", { name: "Move to investigating" }).click();
+  const caseId = Number(page.url().match(/\/incident\/(\d+)/)?.[1]);
+  const apiState = await (await page.request.get(`http://127.0.0.1:8765/incidents/${caseId}`)).json();
+  console.log("After investigating action, API state:", apiState.state, "page button:", await page.getByRole("button", { name: /Move to/ }).allTextContents());
+  await expect(page.getByRole("button", { name: "Move to review-ready" })).toBeVisible();
   await page.getByLabel("Reason for transition").fill("Evidence assessed locally");
   await page.getByRole("button", { name: "Move to review-ready" }).click();
   console.log("Review transition page:", page.url(), "alerts:", await page.getByRole("alert").allTextContents());
