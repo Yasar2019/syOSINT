@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "syOSINT — Syria Open-Source Situation Monitor",
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <div className="site-shell">{children}</div>
+      </body>
     </html>
   );
 }

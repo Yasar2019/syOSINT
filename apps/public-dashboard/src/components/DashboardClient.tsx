@@ -15,6 +15,9 @@ import { Header } from "./Header";
 import { IncidentDetail } from "./IncidentDetail";
 import { IncidentFeed } from "./IncidentFeed";
 import { SummaryCards } from "./SummaryCards";
+import { SyriaMap } from "./SyriaMap";
+import { Timeline } from "./Timeline";
+import Link from "next/link";
 
 function toggleValue<T>(values: T[], value: T): T[] {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
@@ -46,6 +49,9 @@ export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
       dir={getDirection(locale)}
       lang={locale}
     >
+      <a className="skip-link" href="#main-content">
+        {dictionary.accessibility.skipToContent}
+      </a>
       <Header
         locale={locale}
         dictionary={dictionary}
@@ -66,12 +72,26 @@ export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
           onSearchChange={setSearch}
           onReset={resetFilters}
         />
-        <IncidentFeed
-          incidents={incidents}
-          locale={locale}
-          dictionary={dictionary}
-          onSelect={setSelectedIncidentId}
-        />
+        <div className="situation-grid">
+          <SyriaMap
+            incidents={incidents}
+            locale={locale}
+            dictionary={dictionary}
+            onSelect={setSelectedIncidentId}
+          />
+          <Timeline
+            incidents={incidents}
+            locale={locale}
+            dictionary={dictionary}
+            onSelect={setSelectedIncidentId}
+          />
+          <IncidentFeed
+            incidents={incidents}
+            locale={locale}
+            dictionary={dictionary}
+            onSelect={setSelectedIncidentId}
+          />
+        </div>
         {selectedIncident ? (
           <IncidentDetail
             incident={selectedIncident}
@@ -81,6 +101,15 @@ export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
           />
         ) : null}
       </main>
+      <footer className="site-footer">
+        <p>syOSINT · Apache-2.0 · {dictionary.demo.title}</p>
+        <nav aria-label={dictionary.navigation.methodology}>
+          <Link href="/methodology/">{dictionary.navigation.methodology}</Link>
+          <a href="https://github.com/Yasar2019/syOSINT">
+            {dictionary.navigation.repository}
+          </a>
+        </nav>
+      </footer>
     </div>
   );
 }

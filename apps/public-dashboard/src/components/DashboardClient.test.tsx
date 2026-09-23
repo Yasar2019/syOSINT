@@ -30,7 +30,7 @@ describe("DashboardClient", () => {
 
     render(<DashboardClient dataset={dataset} />);
 
-    expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+    expect(screen.getAllByText("<img src=x onerror=alert(1)>")).not.toHaveLength(0);
     expect(document.querySelector("img[src='x']")).toBeNull();
   });
 
