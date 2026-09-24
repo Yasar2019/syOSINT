@@ -65,4 +65,16 @@ describe("repository safety policy", () => {
     expect(workflow).toContain("pnpm collect:rss:public --previous-url");
     expect(workflow).not.toMatch(/pnpm collect:rss:public\s+--\s+--previous-url/);
   });
+
+  it.each([
+    ".github/workflows/rss-wire.yml",
+    ".github/workflows/deploy-pages.yml",
+  ])("keeps every named workflow step aligned beneath steps in %s", (path) => {
+    const namedSteps = readFileSync(path, "utf8")
+      .split("\n")
+      .filter((line) => line.trimStart().startsWith("- name:"));
+
+    expect(namedSteps.length).toBeGreaterThan(0);
+    expect(namedSteps.every((line) => line.startsWith("      - name:"))).toBe(true);
+  });
 });
