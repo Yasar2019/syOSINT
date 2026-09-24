@@ -16,7 +16,7 @@ test("collect and promote a synthetic RSS item through the private inbox", async
   await expect(page.getByText("Synthetic RSS source")).toBeVisible();
 
   await submit("Collect now");
-  await expect(page.getByText("Synthetic Syria feed report")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Synthetic Syria feed report" })).toBeVisible();
   await page.getByLabel("Analyst English title").fill("Analyst-reviewed Syria report");
   await page.getByLabel("العنوان الذي كتبه المحلل").fill("تقرير سوريا راجعه المحلل");
   await submit("Promote after review");
@@ -49,6 +49,7 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await expect(page).toHaveURL(/\/incident\/\d+/);
   const caseId = Number(page.url().match(/\/incident\/(\d+)/)?.[1]);
   const readCase = async () => (await (await page.request.get(`http://127.0.0.1:8765/incidents/${caseId}`)).json()) as { state: string; summary_en?: string; review?: { human_approved?: boolean } };
+  await page.getByLabel("Registered public source").selectOption({ label: "Synthetic journal" });
   await page.getByLabel("Exact public report URL").fill("https://example.org/report");
   await page.getByLabel("Original text (private only)").fill("LOCAL PRIVATE REPORT");
   await submit("Attach evidence");
