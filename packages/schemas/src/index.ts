@@ -6,7 +6,9 @@ export type {
   PublicCorrection,
   PublicDataset,
   PublicIncident,
+  PublicNewsWire,
+  PublicNewsWireEntry,
   PublicSourceReference,
 } from "./types";
-export { validatePublicDataset } from "./validate";
-export type { ValidationResult } from "./validate";
+export { validatePublicDataset, validatePublicNewsWire } from "./validate";
+export type { NewsWireValidationResult, ValidationResult } from "./validate";

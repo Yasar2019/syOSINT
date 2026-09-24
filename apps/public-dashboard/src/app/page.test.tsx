@@ -9,6 +9,8 @@ describe("home page composition", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByText("Demonstration data only")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Syria Situation Desk" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Live News Wire" })).toBeVisible();
+    expect(screen.getByText("Unverified external reporting")).toBeVisible();
     expect(screen.getByRole("region", { name: "Syria situation map" })).toBeVisible();
     expect(screen.getByRole("region", { name: "Activity timeline" })).toBeVisible();
     expect(screen.getByRole("region", { name: "Incident feed" })).toBeVisible();

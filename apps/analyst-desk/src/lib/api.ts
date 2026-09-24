@@ -20,3 +20,32 @@ export async function api<T>(path: string, method = "GET", body?: object): Promi
 export type Source = { id: number; name: string; url: string; language: string };
 export type Incident = { id: number; state: string; title_en: string; title_ar: string; category: string; review?: Record<string, unknown>; [key: string]: unknown };
 export type Evidence = { id: number; source_id: number; url: string; text: string; published_at: string };
+export type FeedHealth = {
+  status: "pending" | "healthy" | "not-modified" | "delayed";
+  last_success_at: string | null;
+  consecutive_failures: number;
+  last_error_category: string | null;
+};
+export type FeedSource = {
+  id: number;
+  name: string;
+  url: string;
+  feed_url: string;
+  language: "en" | "ar";
+  enabled: boolean;
+  poll_interval_minutes: number;
+  health: FeedHealth;
+};
+export type FeedItemStatus = "new" | "promoted" | "attached" | "duplicate" | "quarantined";
+export type FeedItem = {
+  id: number;
+  source_id: number;
+  status: FeedItemStatus;
+  headline: string | null;
+  url?: string;
+  text?: string;
+  published_at?: string;
+  collected_at: string;
+  incident_id?: number | null;
+  reason?: string;
+};

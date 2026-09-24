@@ -9,9 +9,18 @@ function id(form: FormData): number {
   if (!Number.isSafeInteger(number) || number < 1) throw new Error("Invalid incident identifier");
   return number;
 }
+function positiveId(form: FormData, key: string): number {
+  const number = Number(value(form, key));
+  if (!Number.isSafeInteger(number) || number < 1) throw new Error(`Invalid ${key.replace("_", " ")}`);
+  return number;
+}
 function failure(error: unknown): never {
   const message = error instanceof Error ? error.message : "Action failed";
   redirect(`/?error=${encodeURIComponent(message.slice(0, 200))}`);
+}
+function rssFailure(error: unknown): never {
+  const message = error instanceof Error ? error.message : "Action failed";
+  redirect(`/rss?error=${encodeURIComponent(message.slice(0, 200))}`);
 }
 
 export async function addSource(form: FormData) {
@@ -25,6 +34,46 @@ export async function addIncident(form: FormData) {
   try { created = await api("/incidents", "POST", { title_en: value(form, "title_en"), title_ar: value(form, "title_ar"), category: value(form, "category") }); }
   catch (error) { failure(error); }
   redirect(`/incident/${created.id}`);
+}
+
+export async function addFeed(form: FormData) {
+  try {
+    await api("/feeds", "POST", {
+      name: value(form, "name"),
+      url: value(form, "url"),
+      feed_url: value(form, "feed_url"),
+      language: value(form, "language"),
+      enabled: form.get("enabled") === "on",
+      poll_interval_minutes: Number(value(form, "poll_interval_minutes")),
+    });
+  } catch (error) { rssFailure(error); }
+  redirect("/rss");
+}
+
+export async function collectFeed(form: FormData) {
+  try { await api(`/feeds/${positiveId(form, "source_id")}/collect`, "POST"); }
+  catch (error) { rssFailure(error); }
+  redirect("/rss");
+}
+
+export async function promoteFeedItem(form: FormData) {
+  try {
+    await api(`/feed-items/${positiveId(form, "item_id")}/promote`, "POST", {
+      title_en: value(form, "title_en"),
+      title_ar: value(form, "title_ar"),
+      category: value(form, "category"),
+    });
+  } catch (error) { rssFailure(error); }
+  redirect("/rss");
+}
+
+export async function attachFeedItem(form: FormData) {
+  try {
+    await api(`/feed-items/${positiveId(form, "item_id")}/attach`, "POST", {
+      incident_id: positiveId(form, "incident_id"),
+    });
+  } catch (error) { rssFailure(error); }
+  redirect("/rss");
 }
 
 export async function addEvidence(form: FormData) {

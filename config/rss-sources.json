@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "sources": [
+    {
+      "id": "un-news-middle-east",
+      "label": {
+        "en": "UN News — Middle East",
+        "ar": "أخبار الأمم المتحدة — الشرق الأوسط"
+      },
+      "feedUrl": "https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml",
+      "homepageUrl": "https://news.un.org/en/news/region/middle-east",
+      "language": "en",
+      "enabled": true,
+      "requiredTerms": ["Syria", "Syrian"]
+    },
+    {
+      "id": "bbc-arabic",
+      "label": { "en": "BBC Arabic", "ar": "بي بي سي عربي" },
+      "feedUrl": "https://feeds.bbci.co.uk/arabic/rss.xml",
+      "homepageUrl": "https://www.bbc.com/arabic",
+      "language": "ar",
+      "enabled": true,
+      "requiredTerms": ["سوريا", "سوري", "سورية"]
+    }
+  ]
+}
