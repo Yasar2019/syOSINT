@@ -2,12 +2,17 @@ import { expect, test } from "@playwright/test";
 
 test("filters incidents and preserves filters when switching to Arabic", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Live News Wire" })).toBeVisible();
+  await expect(page.getByText("Unverified external reporting")).toBeVisible();
+  await page.getByLabel("Language filter").selectOption("en");
   await page.getByRole("checkbox", { name: /infrastructure/i }).check();
   const countBefore = await page.locator("[data-testid='incident-card']").count();
   expect(countBefore).toBeGreaterThan(0);
 
   await page.getByRole("button", { name: "العربية" }).click();
   await expect(page.getByTestId("dashboard-root")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "شريط الأخبار المباشر" })).toBeVisible();
+  await expect(page.getByLabel("تصفية حسب اللغة")).toHaveValue("en");
   await expect(page.getByRole("checkbox", { name: /البنية التحتية/i })).toBeChecked();
   await expect(page.locator("[data-testid='incident-card']")).toHaveCount(countBefore);
 });

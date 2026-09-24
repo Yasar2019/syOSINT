@@ -43,6 +43,22 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: services/collector-api/pyproject.toml
+      - name: Install collector
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e './services/collector-api'
+      - name: Refresh public news wire without discarding the live artifact
+        run: >-
+          pnpm collect:rss:public --
+          --previous-url https://yasar2019.github.io/syOSINT/news-wire.v1.json
+      - name: Validate refreshed public news wire
+        run: node apps/public-dashboard/scripts/sync-public-data.mjs
       - name: Build repository-scoped export
         env:
           GITHUB_ACTIONS: "true"

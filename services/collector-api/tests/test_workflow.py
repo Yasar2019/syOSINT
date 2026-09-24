@@ -88,7 +88,7 @@ def test_migration_and_records_survive_restart(tmp_path: Path):
     first = TestClient(create_app(app_url, tmp_path / "exports"), base_url="http://127.0.0.1:8765")
     assert first.post("/sources", json={"name": "Journal", "url": "https://example.org", "language": "en"}).status_code == 201
     with sqlite3.connect(vault) as connection:
-        assert connection.execute("select version_num from alembic_version").fetchone()[0] == "0001"
+        assert connection.execute("select version_num from alembic_version").fetchone()[0] == "0002"
     second = TestClient(create_app(app_url, tmp_path / "exports"), base_url="http://127.0.0.1:8765")
     assert second.get("/sources").json()[0]["name"] == "Journal"
     assert len(second.get("/audit").json()) == 1

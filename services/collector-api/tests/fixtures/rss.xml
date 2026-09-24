@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Example Arabic feed</title>
+    <link>https://example.org/</link>
+    <item>
+      <guid>report-1</guid>
+      <title><![CDATA[<strong>تطور جديد في سوريا</strong>]]></title>
+      <link>https://example.org/reports/1?utm_source=feed</link>
+      <pubDate>Wed, 23 Sep 2026 15:55:00 +0000</pubDate>
+    </item>
+    <item>
+      <guid>report-2</guid>
+      <title>خبر إقليمي لا يتعلق بالموضوع</title>
+      <link>https://example.org/reports/2</link>
+      <pubDate>Wed, 23 Sep 2026 15:56:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

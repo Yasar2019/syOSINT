@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validatePublicDataset } from "./validate";
+import { validatePublicDataset, validatePublicNewsWire } from "./validate";
 
 const valid = {
   schemaVersion: "1.0.0",
@@ -42,6 +42,25 @@ const valid = {
         },
       ],
       corrections: [],
+    },
+  ],
+};
+
+const validWire = {
+  schemaVersion: "1.0.0",
+  generatedAt: "2026-09-23T16:00:00Z",
+  lastSuccessfulRefreshAt: "2026-09-23T16:00:00Z",
+  sources: { healthy: 2, delayed: 0 },
+  entries: [
+    {
+      id: "bbc-arabic:abc123",
+      sourceId: "bbc-arabic",
+      sourceLabel: { en: "BBC Arabic", ar: "بي بي سي عربي" },
+      language: "ar",
+      headline: "خبر تجريبي عن سوريا",
+      url: "https://www.bbc.com/arabic/articles/example",
+      publishedAt: "2026-09-23T15:55:00Z",
+      collectedAt: "2026-09-23T16:00:00Z",
     },
   ],
 };
@@ -111,5 +130,32 @@ describe("validatePublicDataset", () => {
       ok: false,
       errors: ["incident demo-001 sourceCount cannot be smaller than sources.length"],
     });
+  });
+});
+
+describe("validatePublicNewsWire", () => {
+  it("accepts the bounded public news-wire contract", () => {
+    expect(validatePublicNewsWire(validWire)).toEqual({
+      ok: true,
+      data: validWire,
+    });
+  });
+
+  it("rejects duplicate ids", () => {
+    const duplicate = {
+      ...validWire,
+      entries: [validWire.entries[0], validWire.entries[0]],
+    };
+
+    expect(validatePublicNewsWire(duplicate).ok).toBe(false);
+  });
+
+  it("rejects private fields", () => {
+    const privateEntry = {
+      ...validWire,
+      entries: [{ ...validWire.entries[0], body: "private" }],
+    };
+
+    expect(validatePublicNewsWire(privateEntry).ok).toBe(false);
   });
 });

@@ -1,5 +1,35 @@
 import { expect, test } from "@playwright/test";
 
+test("collect and promote a synthetic RSS item through the private inbox", async ({ page }) => {
+  const submit = async (name: string) => {
+    const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));
+    await page.getByRole("button", { name }).click();
+    await completed;
+    await page.waitForLoadState("networkidle");
+  };
+
+  await page.goto("/rss");
+  await page.getByLabel("Display name").fill("Synthetic RSS source");
+  await page.getByLabel("Public homepage URL").fill("https://feed.example");
+  await page.getByLabel("RSS or Atom URL").fill("https://feed.example/rss.xml");
+  await submit("Add private feed");
+  await expect(page.getByText("Synthetic RSS source")).toBeVisible();
+
+  await submit("Collect now");
+  await expect(page.getByText("Synthetic Syria feed report")).toBeVisible();
+  await page.getByLabel("Analyst English title").fill("Analyst-reviewed Syria report");
+  await page.getByLabel("العنوان الذي كتبه المحلل").fill("تقرير سوريا راجعه المحلل");
+  await submit("Promote after review");
+
+  const caseLink = page.getByRole("link", { name: /#\d+/ });
+  await expect(caseLink).toBeVisible();
+  const incidentId = Number((await caseLink.getAttribute("href"))?.split("/").pop());
+  const incident = await (await page.request.get(`http://127.0.0.1:8765/incidents/${incidentId}`)).json() as { state: string };
+  const evidence = await (await page.request.get(`http://127.0.0.1:8765/incidents/${incidentId}/evidence`)).json() as unknown[];
+  expect(incident.state).toBe("triage");
+  expect(evidence).toHaveLength(1);
+});
+
 test("review and export a synthetic case through the private desk", async ({ page }) => {
   const submit = async (name: string) => {
     const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));

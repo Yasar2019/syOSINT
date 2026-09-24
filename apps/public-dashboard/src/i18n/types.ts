@@ -17,6 +17,22 @@ export interface Dictionary {
     title: string;
     body: string;
   };
+  newsWire: {
+    title: string;
+    disclosure: string;
+    refreshed: string;
+    sourceFilter: string;
+    allSources: string;
+    languageFilter: string;
+    allLanguages: string;
+    english: string;
+    arabic: string;
+    empty: string;
+    emptyDelayed: string;
+    delayed: string;
+    stale: string;
+    externalLinkContext: string;
+  };
   filters: {
     title: string;
     searchLabel: string;
