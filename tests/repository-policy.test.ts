@@ -55,4 +55,14 @@ describe("repository safety policy", () => {
       workflow.indexOf("sync-public-data.mjs"),
     );
   });
+
+  it.each([
+    ".github/workflows/rss-wire.yml",
+    ".github/workflows/deploy-pages.yml",
+  ])("forwards previous-url without inserting an argument separator in %s", (path) => {
+    const workflow = readFileSync(path, "utf8");
+
+    expect(workflow).toContain("pnpm collect:rss:public --previous-url");
+    expect(workflow).not.toMatch(/pnpm collect:rss:public\s+--\s+--previous-url/);
+  });
 });
