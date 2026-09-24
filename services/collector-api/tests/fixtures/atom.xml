@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:base="https://example.org/news/">
+  <title>Example English feed</title>
+  <entry>
+    <title type="html">Syria &amp;amp; regional update</title>
+    <link rel="alternate" href="reports/3?utm_medium=rss&amp;view=full" />
+    <updated>not-a-date</updated>
+  </entry>
+</feed>

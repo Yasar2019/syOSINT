@@ -1,6 +1,15 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -18,6 +27,10 @@ class Source(Base):
     name: Mapped[str] = mapped_column(String(250))
     url: Mapped[str] = mapped_column(Text, unique=True)
     language: Mapped[str] = mapped_column(String(10))
+    kind: Mapped[str] = mapped_column(String(20), default="manual")
+    feed_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    poll_interval_minutes: Mapped[int] = mapped_column(Integer, default=30)
 
 
 class Incident(Base):
@@ -51,3 +64,64 @@ class Audit(Base):
     before_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     after_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class FeedItem(Base):
+    __tablename__ = "feed_items"
+    __table_args__ = (
+        UniqueConstraint("source_id", "fingerprint", name="uq_feed_item_source_fingerprint"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), index=True)
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    native_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    headline: Mapped[str] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text)
+    text: Mapped[str] = mapped_column(Text)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    raw_digest: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(20), default="new")
+    incident_id: Mapped[int | None] = mapped_column(
+        ForeignKey("incidents.id"), nullable=True
+    )
+
+
+class FeedCursor(Base):
+    __tablename__ = "feed_cursors"
+    source_id: Mapped[int] = mapped_column(
+        ForeignKey("sources.id"), primary_key=True
+    )
+    etag: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_modified: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_success_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    next_poll_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
+    last_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    last_error_category: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class FeedQuarantine(Base):
+    __tablename__ = "feed_quarantine"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_id",
+            "raw_digest",
+            "reason",
+            name="uq_feed_quarantine_source_digest_reason",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), index=True)
+    reason: Mapped[str] = mapped_column(String(80))
+    raw_digest: Mapped[str] = mapped_column(String(64))
+    native_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    headline: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

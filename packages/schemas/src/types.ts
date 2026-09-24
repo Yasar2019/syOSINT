@@ -57,3 +57,22 @@ export interface PublicDataset {
   synthetic: boolean;
   incidents: PublicIncident[];
 }
+
+export interface PublicNewsWireEntry {
+  id: string;
+  sourceId: string;
+  sourceLabel: LocalizedText;
+  language: "en" | "ar";
+  headline: string;
+  url: string;
+  publishedAt: string;
+  collectedAt: string;
+}
+
+export interface PublicNewsWire {
+  schemaVersion: "1.0.0";
+  generatedAt: string;
+  lastSuccessfulRefreshAt: string;
+  sources: { healthy: number; delayed: number };
+  entries: PublicNewsWireEntry[];
+}

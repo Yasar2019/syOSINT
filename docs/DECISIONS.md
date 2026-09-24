@@ -20,7 +20,7 @@ This file records project decisions that future agents must preserve unless the 
 
 ## ADR-003 — Human publication gate
 
-**Decision:** No collected report is published automatically. Publication is an explicit analyst action and fails closed.
+**Decision:** No incident, evidence, analyst summary, or confidence judgment is published automatically. Publication is an explicit analyst action and fails closed. ADR-011 defines the sole metadata-only exception for the public RSS/Atom wire.
 
 **Reason:** Source reports may be incomplete, contradictory, sensitive, or unsafe to publish.
 
@@ -81,3 +81,11 @@ This file records project decisions that future agents must preserve unless the 
 **Reason:** Chat-agent runtime state is temporary and may disappear.
 
 **Consequence:** Hidden scratchpads, uncommitted files, or chat-only decisions must not be required to continue development.
+
+## ADR-011 — Automatic RSS metadata is a narrow public-wire exception
+
+**Decision:** A scheduled GitHub Actions workflow may automatically publish minimal metadata from reviewed, committed RSS/Atom allowlist entries: source label, original headline, language, stable identifier, publication/collection time, and canonical publisher URL.
+
+**Reason:** A timely public headline wire is useful before an analyst can verify and model every report, provided it cannot be confused with a syOSINT finding.
+
+**Consequence:** Every wire entry is labeled unverified external reporting and remains visually separate from reviewed incidents. Article bodies, descriptions, locations, media, analyst text, evidence, confidence labels, and incident records stay behind ADR-003's human publication gate. Adding or changing a public source requires repository review.

@@ -20,13 +20,7 @@ This roadmap summarizes the approved product design. Detailed requirements live 
 - synthetic-only static data;
 - accessibility baseline.
 
-## Current
-
 ### Milestone 2 — Private analyst desk
-
-Goal: provide a local-first review and publication workspace without introducing live collectors yet.
-
-Scope:
 
 - localhost-only analyst UI;
 - local API and SQLite migrations;
@@ -38,19 +32,24 @@ Scope:
 - sanitized publication preview;
 - validated public export.
 
-Exit criteria:
-
-- a synthetic incident can move through triage, investigation, review, approval, and export;
-- unsafe/restricted fields are blocked from export;
-- every material change is auditable;
-- public export validates against the versioned schema;
-- tests, lint, type checks, and security checks pass.
-
-## Next
+## Current
 
 ### Milestone 3 — RSS collection
 
-RSS/Atom adapter, source health, cursors, deterministic fingerprints, quarantine, bounded retry behavior, and integration into the analyst workflow.
+Goal: collect reviewed public RSS/Atom feeds into a clearly separated automatic headline wire and a private human-review inbox.
+
+Implemented scope:
+
+- repository-controlled feed allowlist and deterministic Syria-topic filters;
+- safe, bounded RSS 2.0 and Atom fetching and parsing;
+- fingerprints, duplicate handling, cursors, conditional requests, health and quarantine;
+- local 30-minute scheduler and private analyst inbox;
+- human promotion or attachment to editable incidents;
+- bilingual public Live News Wire, separate from reviewed incidents;
+- validated metadata-only Pages refresh every 30 minutes;
+- Python 3.14 runtime and security checks.
+
+## Next
 
 ### Milestone 4 — Telegram collection
 
@@ -65,7 +64,7 @@ Candidate-source review, grouping suggestions, correction/withdrawal tooling, re
 ## Explicitly out of scope
 
 - private or invite-only source access;
-- autonomous publication;
+- autonomous publication of incidents or analyst-authored material;
 - facial recognition or person tracking;
 - offensive-security tooling;
 - multi-user cloud collaboration in the MVP;
@@ -73,3 +72,5 @@ Candidate-source review, grouping suggestions, correction/withdrawal tooling, re
 - unrestricted scraping;
 - live tactical tracking;
 - automated credibility verdicts.
+
+The only automatic-publication exception is minimal original headline metadata from reviewed RSS/Atom feeds. Every wire entry is labeled unverified external reporting; it never becomes an incident without human action.

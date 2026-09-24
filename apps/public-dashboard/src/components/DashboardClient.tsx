@@ -5,6 +5,7 @@ import type {
   ConfidenceLabel,
   IncidentCategory,
   PublicDataset,
+  PublicNewsWire,
 } from "@syosint/schemas";
 import { getDictionary, getDirection } from "../i18n/get-dictionary";
 import type { Locale } from "../i18n/types";
@@ -17,13 +18,14 @@ import { IncidentFeed } from "./IncidentFeed";
 import { SummaryCards } from "./SummaryCards";
 import { SyriaMap } from "./SyriaMap";
 import { Timeline } from "./Timeline";
+import { NewsWire } from "./NewsWire";
 import Link from "next/link";
 
 function toggleValue<T>(values: T[], value: T): T[] {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 }
 
-export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
+export function DashboardClient({ dataset, newsWire }: { dataset: PublicDataset; newsWire: PublicNewsWire }) {
   const [locale, setLocale] = useState<Locale>("en");
   const [categories, setCategories] = useState<IncidentCategory[]>([]);
   const [confidence, setConfidence] = useState<ConfidenceLabel[]>([]);
@@ -60,6 +62,7 @@ export function DashboardClient({ dataset }: { dataset: PublicDataset }) {
       />
       {dataset.synthetic && <DemoBanner dictionary={dictionary} />}
       <main id="main-content">
+        <NewsWire wire={newsWire} locale={locale} dictionary={dictionary} />
         <SummaryCards incidents={incidents} dictionary={dictionary} />
         <FilterBar
           dictionary={dictionary}
