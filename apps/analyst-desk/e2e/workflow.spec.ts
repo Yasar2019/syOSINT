@@ -64,6 +64,8 @@ test("review and export a synthetic case through the private desk", async ({ pag
   await page.getByLabel("Event time · ISO UTC").fill("2026-09-23T10:00:00Z");
   await submit("Save public fields");
   await expect.poll(async () => (await readCase()).summary_en).toBe("An outage was reported.");
+  await page.reload();
+  await expect(page.getByLabel("Original summary · English")).toHaveValue("An outage was reported.");
   await page.getByLabel("Reason for transition").fill("Initial triage completed");
   await submit("Move to investigating");
   await expect.poll(async () => (await readCase()).state).toBe("investigating");
