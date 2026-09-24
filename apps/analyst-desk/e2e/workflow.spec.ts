@@ -79,6 +79,8 @@ test("review and export a synthetic case through the private desk", async ({ pag
   }
   await submit("Record review");
   await expect.poll(async () => (await readCase()).review?.human_approved).toBe(true);
+  await page.reload();
+  await expect(page.getByLabel("I personally reviewed this case for publication")).toBeChecked();
   await page.getByLabel("Reason for transition").fill("Publication check complete");
   await submit("Move to approved");
   await expect.poll(async () => (await readCase()).state).toBe("approved");
