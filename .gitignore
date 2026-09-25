@@ -8,6 +8,7 @@
 evidence/
 raw-media/
 private-data/
+private-data/telegram/
 pending-exports/
 *.log
 .next/
@@ -21,5 +22,6 @@ node_modules/
 .worktrees/
 .venv*/
 __pycache__/
+*.egg-info/
 *.py[cod]
 apps/public-dashboard/public/news-wire.v1.json

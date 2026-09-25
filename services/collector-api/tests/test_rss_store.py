@@ -72,9 +72,9 @@ def test_migration_upgrades_initial_schema_and_survives_restart(tmp_path):
 
     first = database(url)
     assert {
-        "feed_items",
+        "intake_items",
         "feed_cursors",
-        "feed_quarantine",
+        "intake_quarantine",
     }.issubset(inspect(first).get_table_names())
     assert {"kind", "feed_url", "enabled", "poll_interval_minutes"}.issubset(
         {column["name"] for column in inspect(first).get_columns("sources")}
@@ -84,7 +84,7 @@ def test_migration_upgrades_initial_schema_and_survives_restart(tmp_path):
     first.dispose()
 
     second = database(url)
-    assert inspect(second).get_unique_constraints("feed_items")[0][
+    assert inspect(second).get_unique_constraints("intake_items")[0][
         "column_names"
     ] == ["source_id", "fingerprint"]
 
