@@ -27,6 +27,15 @@ export interface Dictionary {
     allLanguages: string;
     english: string;
     arabic: string;
+    configured: string;
+    healthy: string;
+    delayedCount: string;
+    headline: string;
+    headlines: string;
+    sourceDelayed: string;
+    sourceEmpty: string;
+    noRecentHeadlines: string;
+    showMore: string;
     empty: string;
     emptyDelayed: string;
     delayed: string;

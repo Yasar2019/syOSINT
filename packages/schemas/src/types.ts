@@ -69,10 +69,22 @@ export interface PublicNewsWireEntry {
   collectedAt: string;
 }
 
+export interface PublicNewsWireSourceState {
+  id: string;
+  label: LocalizedText;
+  language: "en" | "ar";
+  attribution: string;
+  attributionUrl: string;
+  status: "healthy" | "not-modified" | "delayed";
+  lastSuccessfulRefreshAt: string | null;
+  entryCount: number;
+}
+
 export interface PublicNewsWire {
-  schemaVersion: "1.0.0";
+  schemaVersion: "1.1.0";
   generatedAt: string;
   lastSuccessfulRefreshAt: string;
-  sources: { healthy: number; delayed: number };
+  sources: { configured: number; healthy: number; delayed: number };
+  sourceStates: PublicNewsWireSourceState[];
   entries: PublicNewsWireEntry[];
 }

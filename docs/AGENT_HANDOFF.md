@@ -65,12 +65,12 @@ Current sequence:
 
 - Milestone 0: foundation — complete
 - Milestone 1: public dashboard — complete
-- Milestone 2: private analyst desk — active
-- Milestone 3: RSS — not started
-- Milestone 4: Telegram — not started
+- Milestone 2: private analyst desk — complete
+- Milestone 3: RSS — complete and deployed
+- Milestone 4: source expansion and Telegram intake — implementation plans pending review
 - Milestone 5: discovery/hardening — not started
 
-Do not pull RSS or Telegram implementation into Milestone 2 unless the user explicitly changes the roadmap.
+Milestone 4 includes RSS allowlist expansion, a shared RSS/Telegram private intake core, local read-only collection from manually approved public Telegram channels, and a separate human-approved public Telegram wire. Channel approval never authorizes automatic publication. Telegram-derived content remains excluded from AI/ML processing.
 
 ## 6. Before ending a session
 

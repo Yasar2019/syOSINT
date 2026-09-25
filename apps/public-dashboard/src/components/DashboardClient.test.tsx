@@ -13,6 +13,16 @@ const renderDashboard = () =>
   );
 
 describe("DashboardClient", () => {
+  it("distinguishes fictional reviewed incidents from real unverified publisher headlines", () => {
+    renderDashboard();
+    expect(screen.getByText(/reviewed incidents are fictional demonstration data/i)).toBeVisible();
+    expect(screen.getByText(/Live News Wire contains real, unverified external publisher headlines/i)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "العربية" }));
+    expect(screen.getByText(/الحوادث المراجعة بيانات توضيحية خيالية/)).toBeVisible();
+    expect(screen.getByText(/عناوين حقيقية من ناشرين خارجيين لم يتم التحقق منها/)).toBeVisible();
+  });
+
   it("filters by category and announces the result count", () => {
     renderDashboard();
 

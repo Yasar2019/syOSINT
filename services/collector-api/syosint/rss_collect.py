@@ -5,6 +5,7 @@ import random
 import time
 from typing import Literal, Protocol
 
+from .rss_normalize import normalize_text
 from .rss_parse import parse_feed
 from .rss_public import PublicWire
 from .rss_types import FeedSource, NormalizedFeedItem, QuarantinedItem
@@ -33,6 +34,15 @@ class CollectionResult:
     outcomes: tuple[SourceOutcome, ...]
 
 
+def headline_matches(source: FeedSource, headline: str) -> bool:
+    normalized = normalize_text(headline)
+    if any(normalize_text(term) in normalized for term in source.excluded_terms):
+        return False
+    return source.topic_mode == "syria-only" or any(
+        normalize_text(term) in normalized for term in source.required_terms
+    )
+
+
 def _collect_source(
     source: FeedSource,
     now: datetime,
@@ -58,7 +68,11 @@ def _collect_source(
             return SourceOutcome(
                 source.id,
                 "healthy",
-                parsed.items,
+                tuple(
+                    item
+                    for item in parsed.items
+                    if headline_matches(source, item.headline)
+                ),
                 None,
                 updated_validators,
                 parsed.quarantined,

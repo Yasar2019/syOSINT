@@ -8,6 +8,7 @@ export type {
   PublicIncident,
   PublicNewsWire,
   PublicNewsWireEntry,
+  PublicNewsWireSourceState,
   PublicSourceReference,
 } from "./types";
 export { validatePublicDataset, validatePublicNewsWire } from "./validate";

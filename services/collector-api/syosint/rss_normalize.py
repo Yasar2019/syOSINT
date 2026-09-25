@@ -45,13 +45,13 @@ def canonicalize_url(url: str) -> str:
     return urlunsplit((parts.scheme.lower(), netloc, parts.path or "/", query, ""))
 
 
-def _normalized_text(value: str) -> str:
+def normalize_text(value: str) -> str:
     return unicodedata.normalize("NFKC", value).casefold()
 
 
 def matches_topic(headline: str, required_terms: tuple[str, ...]) -> bool:
-    normalized_headline = _normalized_text(headline)
-    return any(_normalized_text(term) in normalized_headline for term in required_terms)
+    normalized_headline = normalize_text(headline)
+    return any(normalize_text(term) in normalized_headline for term in required_terms)
 
 
 def fingerprint_item(
@@ -67,5 +67,5 @@ def fingerprint_item(
         identity = f"url\0{canonicalize_url(url)}"
     else:
         timestamp = published_at.isoformat() if published_at is not None else ""
-        identity = f"content\0{_normalized_text(headline).strip()}\0{timestamp}"
+        identity = f"content\0{normalize_text(headline).strip()}\0{timestamp}"
     return sha256(f"{source_id}\0{identity}".encode()).hexdigest()

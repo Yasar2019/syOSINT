@@ -2,7 +2,7 @@
 
 syOSINT is an open-source, bilingual situational-awareness workspace for journalists and OSINT researchers monitoring public reporting about Syria. It is designed around traceable evidence, human verification, explicit uncertainty, and safety-aware publication.
 
-> **Current milestone:** Milestone 2's private analyst desk is complete. Milestone 3 adds a reviewed RSS/Atom allowlist, a local collection inbox and an automatically refreshed public headline wire. The reviewed incident dataset remains synthetic until a human explicitly publishes approved incident records.
+> **Current milestone:** Milestones 1–3 are deployed. Milestone 4 pull request 1 expands and hardens the public RSS wire; it is ready for review. Telegram intake and individually approved public Telegram items remain separate, incomplete follow-up work. The reviewed incident dataset remains synthetic until a human explicitly publishes approved incident records.
 
 ## Principles
 
@@ -22,12 +22,14 @@ syOSINT is an open-source, bilingual situational-awareness workspace for journal
 - Strict public-data validation and synthetic fixtures covering all confidence labels and incident categories.
 - Automated unit, policy, browser, static-export, and GitHub Pages checks.
 - Local SQLite evidence and audit trail, human safety review, exact sanitized preview, and explicit staged JSON export.
-- Automatic public RSS/Atom headline collection every 30 minutes, with deterministic Syria-topic filters, safe fetching, bounded retention, and a separate **Unverified external reporting** display.
+- Automatic public RSS/Atom headline collection every 30 minutes from eight reviewed Arabic/English feeds, with deterministic Syria-topic filters, safe fetching, source attribution links, bounded retention, and a separate **Unverified external reporting** display.
 - Private RSS inbox with source health, quarantine, duplicate handling, and human promotion into the existing triage workflow.
 
 ## Architecture
 
-The public side is a statically exported Next.js application that consumes validated, versioned JSON datasets. Map geometry is bundled at build time. There is no dashboard backend and no client-side request to an external data or map service. A scheduled GitHub Actions job fetches allowlisted feeds, projects only source/headline/time/link metadata, validates the wire, and redeploys the static site. New matching headlines normally appear within 30–35 minutes.
+The public side is a statically exported Next.js application that consumes validated, versioned JSON datasets. Map geometry is bundled at build time. There is no dashboard backend and no client-side request to an external data or map service. A scheduled GitHub Actions job live-checks all enabled feeds, fetches the allowlist, projects only source/headline/time/link metadata plus public source status and legal attribution, validates the `1.1.0` wire, and redeploys the static site. New matching headlines normally appear within 30–35 minutes. Retention is seven days, at most 100 entries per source, and at most 500 entries globally.
+
+The reviewed feed pool is SyriaUntold English and Arabic; GOV.UK Syria news; European Parliament Mashreq, Foreign Affairs, and External Relations; European Commission Press Corner; and Council of the EU press releases. See the [dated source review record](docs/source-policy/RSS-SOURCE-REVIEWS.md) for exact endpoints, terms, attribution evidence, and rejected candidates.
 
 The local-only FastAPI service owns SQLite evidence, RSS intake, and the human-gated incident export. The separate local Next.js desk calls the service server-side. Raw feed bodies, evidence, analyst notes, and quarantined payloads never enter the static dashboard or Git repository. Telegram collection remains a later milestone.
 
@@ -88,7 +90,8 @@ To exercise the reviewed-incident workflow: promote a collected item or register
 To test the public collector locally without changing the checked-in dataset:
 
 ```bash
-.venv314/bin/python -m syosint.rss_cli check-source https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml
+.venv314/bin/python -m syosint.rss_cli check-source -- https://syriauntold.com/en/feed/
+.venv314/bin/python -m syosint.rss_gate --config config/rss-sources.json
 .venv314/bin/python -m syosint.rss_cli collect-public --config config/rss-sources.json --output /tmp/news-wire.v1.json
 .venv314/bin/python -m json.tool /tmp/news-wire.v1.json
 ```
@@ -110,7 +113,7 @@ The bundled boundary geometry provides geographic context and expresses no legal
 
 ## GitHub Pages
 
-After merging to `main`, select **Settings → Pages → Source → GitHub Actions**. CI-gated pushes deploy the reviewed repository state. The `Refresh RSS News Wire` workflow also runs every 30 minutes and can be dispatched manually; it collects the allowlist, retains valid recent entries from the last deployed wire when appropriate, validates both public contracts, and publishes `apps/public-dashboard/out` under `/syOSINT/`. A failed collection, validation, or build does not replace the last successful Pages artifact.
+After merging to `main`, select **Settings → Pages → Source → GitHub Actions**. CI-gated pushes deploy the reviewed repository state. The `Refresh RSS News Wire` workflow also runs every 30 minutes and can be dispatched manually. Both Pages workflows first run the same fail-closed live gate across all enabled sources, then collect, retain valid recent entries from the last deployed wire when appropriate, validate the public contracts, and publish `apps/public-dashboard/out` under `/syOSINT/`. Logs expose bounded per-source status tokens while the step summary is aggregate only. A failed gate, collection, validation, or build does not replace the last successful Pages artifact. After a transient outage, inspect the safe category and manually rerun; for a permanent endpoint or terms change, disable and re-review the source rather than bypassing the gate.
 
 ## Roadmap
 

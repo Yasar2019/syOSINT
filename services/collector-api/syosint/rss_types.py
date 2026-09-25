@@ -13,6 +13,9 @@ class FeedSource:
     enabled: bool
     required_terms: tuple[str, ...]
     attribution: str | None = None
+    attribution_url: str | None = None
+    topic_mode: Literal["syria-only", "keyword-filtered"] = "keyword-filtered"
+    excluded_terms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

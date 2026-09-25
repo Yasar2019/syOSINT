@@ -69,6 +69,20 @@ describe("repository safety policy", () => {
   it.each([
     ".github/workflows/rss-wire.yml",
     ".github/workflows/deploy-pages.yml",
+  ])("fails closed through the shared live source gate before collection in %s", (path) => {
+    const workflow = readFileSync(path, "utf8");
+
+    expect(workflow).toContain(
+      "python -m syosint.rss_gate --config config/rss-sources.json",
+    );
+    expect(workflow.indexOf("python -m syosint.rss_gate")).toBeLessThan(
+      workflow.indexOf("collect:rss:public"),
+    );
+  });
+
+  it.each([
+    ".github/workflows/rss-wire.yml",
+    ".github/workflows/deploy-pages.yml",
   ])("keeps every named workflow step aligned beneath steps in %s", (path) => {
     const namedSteps = readFileSync(path, "utf8")
       .split("\n")

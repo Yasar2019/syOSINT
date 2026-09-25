@@ -46,7 +46,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e './services/collector-api'
-      - name: Collect allowlisted public feeds
+      - name: Check every enabled public feed
+        run: python -m syosint.rss_gate --config config/rss-sources.json
+      - name: Collect feeds and write aggregate step summary
         run: >-
           pnpm collect:rss:public --previous-url
           https://yasar2019.github.io/syOSINT/news-wire.v1.json

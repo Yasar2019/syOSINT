@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from hashlib import sha256
@@ -8,7 +10,7 @@ from urllib.parse import urljoin
 from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
 
-from .rss_normalize import canonicalize_url, fingerprint_item, matches_topic
+from .rss_normalize import canonicalize_url, fingerprint_item
 from .rss_types import (
     FeedSource,
     NormalizedFeedItem,
@@ -119,9 +121,6 @@ def parse_feed(
                 )
             )
             continue
-        if not matches_topic(headline, source.required_terms):
-            continue
-
         entry_base = entry.attrib.get(XML_BASE, root_base)
         url = canonicalize_url(urljoin(entry_base, raw_url.strip()))
         raw_date = _text(entry, "updated" if is_atom else "pubDate")

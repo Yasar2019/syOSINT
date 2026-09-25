@@ -5,6 +5,8 @@ import type { PublicNewsWire } from "@syosint/schemas";
 import type { Dictionary, Locale } from "../i18n/types";
 import { filterNewsWire } from "../lib/filter-news-wire";
 
+const PAGE_SIZE = 25;
+
 export function NewsWire({
   wire,
   locale,
@@ -16,6 +18,7 @@ export function NewsWire({
 }) {
   const [sourceId, setSourceId] = useState("");
   const [language, setLanguage] = useState<"" | "en" | "ar">("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [stale, setStale] = useState(false);
   useEffect(() => {
     const update = () =>
@@ -28,14 +31,10 @@ export function NewsWire({
   }, [wire.lastSuccessfulRefreshAt]);
   const sources = useMemo(
     () =>
-      Array.from(
-        new Map(
-          wire.entries.map((entry) => [entry.sourceId, entry.sourceLabel]),
-        ),
-      ).sort((left, right) =>
-        left[1][locale].localeCompare(right[1][locale], locale),
+      [...wire.sourceStates].sort((left, right) =>
+        left.label[locale].localeCompare(right.label[locale], locale),
       ),
-    [wire.entries, locale],
+    [wire.sourceStates, locale],
   );
   const entries = useMemo(
     () =>
@@ -45,6 +44,17 @@ export function NewsWire({
       }),
     [wire.entries, sourceId, language],
   );
+  const selectedState = wire.sourceStates.find((source) => source.id === sourceId);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const emptyMessage = selectedState?.status === "delayed"
+    ? dictionary.newsWire.sourceDelayed
+    : selectedState && selectedState.entryCount === 0
+      ? dictionary.newsWire.sourceEmpty
+      : selectedState
+        ? dictionary.newsWire.empty
+        : wire.entries.length === 0 && (stale || wire.sources.delayed > 0)
+          ? dictionary.newsWire.emptyDelayed
+          : dictionary.newsWire.empty;
 
   return (
     <section className="news-wire" aria-labelledby="news-wire-title">
@@ -77,13 +87,36 @@ export function NewsWire({
         </div>
       </div>
 
+      <p className="wire-coverage">
+        {wire.sources.configured} {dictionary.newsWire.configured} ·{" "}
+        {wire.sources.healthy} {dictionary.newsWire.healthy} ·{" "}
+        {wire.sources.delayed} {dictionary.newsWire.delayedCount} ·{" "}
+        {wire.entries.length}{" "}
+        {wire.entries.length === 1
+          ? dictionary.newsWire.headline
+          : dictionary.newsWire.headlines}
+      </p>
+
       <div className="wire-filters">
         <label>
           {dictionary.newsWire.sourceFilter}
-          <select value={sourceId} onChange={(event) => setSourceId(event.target.value)}>
+          <select
+            value={sourceId}
+            onChange={(event) => {
+              setSourceId(event.target.value);
+              setVisibleCount(PAGE_SIZE);
+            }}
+          >
             <option value="">{dictionary.newsWire.allSources}</option>
-            {sources.map(([id, label]) => (
-              <option value={id} key={id}>{label[locale]}</option>
+            {sources.map((source) => (
+              <option value={source.id} key={source.id}>
+                {source.label[locale]}
+                {source.status === "delayed"
+                  ? ` · ${dictionary.newsWire.delayedCount}`
+                  : source.entryCount === 0
+                    ? ` · ${dictionary.newsWire.noRecentHeadlines}`
+                    : ""}
+              </option>
             ))}
           </select>
         </label>
@@ -91,9 +124,10 @@ export function NewsWire({
           {dictionary.newsWire.languageFilter}
           <select
             value={language}
-            onChange={(event) =>
-              setLanguage(event.target.value as "" | "en" | "ar")
-            }
+            onChange={(event) => {
+              setLanguage(event.target.value as "" | "en" | "ar");
+              setVisibleCount(PAGE_SIZE);
+            }}
           >
             <option value="">{dictionary.newsWire.allLanguages}</option>
             <option value="en">{dictionary.newsWire.english}</option>
@@ -103,39 +137,73 @@ export function NewsWire({
       </div>
 
       {entries.length === 0 ? (
-        <p className="wire-empty">
-          {stale || wire.sources.delayed > 0
-            ? dictionary.newsWire.emptyDelayed
-            : dictionary.newsWire.empty}
-        </p>
+        <div className="wire-empty">
+          <p>{emptyMessage}</p>
+          {selectedState && (
+            <a
+              className="wire-attribution"
+              href={selectedState.attributionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {selectedState.attribution}
+            </a>
+          )}
+        </div>
       ) : (
-        <ol className="wire-list">
-          {entries.map((entry) => (
-            <li key={entry.id}>
-              <article>
-                <div className="wire-meta">
-                  <span>{entry.sourceLabel[locale]}</span>
-                  <time dateTime={entry.publishedAt}>
-                    {new Date(entry.publishedAt).toLocaleString(
-                      locale === "ar" ? "ar-SY" : "en-GB",
-                      { timeZone: "UTC" },
-                    )} UTC
-                  </time>
-                </div>
-                <h3 lang={entry.language} dir={entry.language === "ar" ? "rtl" : "ltr"}>
-                  <a
-                    href={entry.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${entry.headline} — ${dictionary.newsWire.externalLinkContext}`}
-                  >
-                    {entry.headline}
-                  </a>
-                </h3>
-              </article>
-            </li>
-          ))}
-        </ol>
+        <>
+          <ol className="wire-list">
+            {visibleEntries.map((entry) => {
+              const sourceState = wire.sourceStates.find(
+                (source) => source.id === entry.sourceId,
+              );
+              return (
+                <li key={entry.id}>
+                  <article>
+                    <div className="wire-meta">
+                      <span>{entry.sourceLabel[locale]}</span>
+                      <time dateTime={entry.publishedAt}>
+                        {new Date(entry.publishedAt).toLocaleString(
+                          locale === "ar" ? "ar-SY" : "en-GB",
+                          { timeZone: "UTC" },
+                        )} UTC
+                      </time>
+                    </div>
+                    <h3 lang={entry.language} dir={entry.language === "ar" ? "rtl" : "ltr"}>
+                      <a
+                        href={entry.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${entry.headline} — ${dictionary.newsWire.externalLinkContext}`}
+                      >
+                        {entry.headline}
+                      </a>
+                    </h3>
+                    {sourceState && (
+                      <a
+                        className="wire-attribution"
+                        href={sourceState.attributionUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {sourceState.attribution}
+                      </a>
+                    )}
+                  </article>
+                </li>
+              );
+            })}
+          </ol>
+          {visibleCount < entries.length && (
+            <button
+              className="wire-more"
+              type="button"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            >
+              {dictionary.newsWire.showMore}
+            </button>
+          )}
+        </>
       )}
     </section>
   );

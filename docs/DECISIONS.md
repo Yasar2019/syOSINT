@@ -89,3 +89,19 @@ This file records project decisions that future agents must preserve unless the 
 **Reason:** A timely public headline wire is useful before an analyst can verify and model every report, provided it cannot be confused with a syOSINT finding.
 
 **Consequence:** Every wire entry is labeled unverified external reporting and remains visually separate from reviewed incidents. Article bodies, descriptions, locations, media, analyst text, evidence, confidence labels, and incident records stay behind ADR-003's human publication gate. Adding or changing a public source requires repository review.
+
+## ADR-012 — RSS and Telegram share a private intake core
+
+**Decision:** RSS and Telegram adapters normalize into one platform-neutral local intake workflow while retaining adapter-specific cursors, health, and collection policies.
+
+**Reason:** Promotion, attachment, audit, quarantine, retention, and human review should behave consistently without duplicating platform-specific implementations.
+
+**Consequence:** Existing RSS feed items migrate without losing identity or incident links. The analyst desk provides one unified intake view plus RSS- and Telegram-specific operational views.
+
+## ADR-013 — Public Telegram items require per-item human approval
+
+**Decision:** An approved public Telegram channel may be collected locally, but no Telegram item is published automatically. A public Telegram lead requires human-written English and Arabic headlines, item-specific safety review, exact sanitized preview, and explicit approval.
+
+**Reason:** Channel-level trust cannot make every post safe, accurate, lawful, or suitable for public redistribution. A per-item gate provides public Telegram awareness without exposing raw post text, media, private data, or tactical detail.
+
+**Consequence:** Public Telegram records live in a separate versioned wire and are labeled as reviewed external reports that are not independently verified. They contain source attribution, a permanent public link, timestamps, and human-written bilingual headlines only. Source edits and deletions create a correction or withdrawal review and never silently rewrite public history. Telegram-derived material remains excluded from all AI/ML processing.

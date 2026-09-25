@@ -32,8 +32,6 @@ This roadmap summarizes the approved product design. Detailed requirements live 
 - sanitized publication preview;
 - validated public export.
 
-## Current
-
 ### Milestone 3 — RSS collection
 
 Goal: collect reviewed public RSS/Atom feeds into a clearly separated automatic headline wire and a private human-review inbox.
@@ -49,13 +47,27 @@ Implemented scope:
 - validated metadata-only Pages refresh every 30 minutes;
 - Python 3.14 runtime and security checks.
 
+## Current
+
+### Milestone 4 — Source expansion and Telegram intake
+
+Goal: make the public source wire materially more useful and add terms-compliant, local-only collection for approved public Telegram channels.
+
+Approved design:
+
+- expand the reviewed public RSS/Atom allowlist to 8–12 Arabic and English sources;
+- expose configured, healthy, delayed, and empty source states on the public dashboard;
+- introduce a shared private intake model for RSS and Telegram;
+- use analyst-owned official Telegram API credentials and a manual local public-channel allowlist;
+- handle bounded backfill, new posts, edits, deletions, rate limits, reconciliation, and optional local media preservation;
+- provide unified and platform-specific analyst views; and
+- permit only individually reviewed Telegram items with human-written bilingual headlines to enter a separate public wire.
+
+Channel approval authorizes collection only. Every public Telegram item requires explicit human safety review and approval. Telegram-derived content must never be processed by AI or machine-learning systems.
+
+Approved design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
+
 ## Next
-
-### Milestone 4 — Telegram collection
-
-Terms-compliant official Telegram API integration for approved public channels only, read-only ingestion, edits/deletions/rate-limit handling, optional bounded media preservation, and explicit Telegram data-handling controls.
-
-Telegram-derived content must never be processed by AI or machine-learning systems.
 
 ### Milestone 5 — Discovery and hardening
 

@@ -2,25 +2,83 @@
   "schemaVersion": "1.0.0",
   "sources": [
     {
-      "id": "un-news-middle-east",
-      "label": {
-        "en": "UN News — Middle East",
-        "ar": "أخبار الأمم المتحدة — الشرق الأوسط"
-      },
-      "feedUrl": "https://news.un.org/feed/subscribe/en/news/region/middle-east/feed/rss.xml",
-      "homepageUrl": "https://news.un.org/en/news/region/middle-east",
-      "language": "en",
-      "enabled": true,
-      "requiredTerms": ["Syria", "Syrian"]
+      "id": "syria-untold-english",
+      "label": { "en": "SyriaUntold — English", "ar": "سوريا على طول — الإنجليزية" },
+      "feedUrl": "https://syriauntold.com/en/feed/",
+      "homepageUrl": "https://syriauntold.com/en/",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "SyriaUntold content — CC BY-NC-SA",
+      "attributionUrl": "https://syriauntold.com/about-syria-untold/"
     },
     {
-      "id": "bbc-arabic",
-      "label": { "en": "BBC Arabic", "ar": "بي بي سي عربي" },
-      "feedUrl": "https://feeds.bbci.co.uk/arabic/rss.xml",
-      "homepageUrl": "https://www.bbc.com/arabic",
-      "language": "ar",
-      "enabled": true,
-      "requiredTerms": ["سوريا", "سوري", "سورية"]
+      "id": "european-parliament-mashreq",
+      "label": { "en": "European Parliament — Mashreq", "ar": "البرلمان الأوروبي — المشرق" },
+      "feedUrl": "https://www.europarl.europa.eu/rss/delegation/dmas/en.xml",
+      "homepageUrl": "https://www.europarl.europa.eu/delegations/en/dmas/home",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "European Parliament — legal notice",
+      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
+    },
+    {
+      "id": "syria-untold-arabic",
+      "label": { "en": "SyriaUntold — Arabic", "ar": "سوريا على طول — العربية" },
+      "feedUrl": "https://syriauntold.com/ar/feed/", "homepageUrl": "https://syriauntold.com/ar/",
+      "language": "ar", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["سوريا", "سوري", "سورية", "دمشق", "حلب", "إدلب"], "excludedTerms": [],
+      "attribution": "محتوى سوريا على طول — CC BY-NC-SA",
+      "attributionUrl": "https://syriauntold.com/about-syria-untold/"
+    },
+    {
+      "id": "govuk-syria-news",
+      "label": { "en": "GOV.UK — Syria news", "ar": "حكومة المملكة المتحدة — أخبار سوريا" },
+      "feedUrl": "https://www.gov.uk/search/news-and-communications.atom?keywords=Syria",
+      "homepageUrl": "https://www.gov.uk/search/news-and-communications?keywords=Syria",
+      "language": "en", "enabled": true, "topicMode": "syria-only",
+      "requiredTerms": [], "excludedTerms": [],
+      "attribution": "GOV.UK information licensed under the Open Government Licence v3.0",
+      "attributionUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+    },
+    {
+      "id": "european-parliament-foreign-affairs",
+      "label": { "en": "European Parliament — Foreign Affairs", "ar": "البرلمان الأوروبي — الشؤون الخارجية" },
+      "feedUrl": "https://www.europarl.europa.eu/rss/committee/afet/en.xml",
+      "homepageUrl": "https://www.europarl.europa.eu/committees/en/afet/home/highlights",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "European Parliament — legal notice",
+      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
+    },
+    {
+      "id": "european-commission-press",
+      "label": { "en": "European Commission — Press Corner", "ar": "المفوضية الأوروبية — المركز الصحفي" },
+      "feedUrl": "https://ec.europa.eu/commission/presscorner/api/rss?language=en",
+      "homepageUrl": "https://ec.europa.eu/commission/presscorner/home/en",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "European Commission — legal notice",
+      "attributionUrl": "https://commission.europa.eu/legal-notice_en"
+    },
+    {
+      "id": "european-parliament-external-relations",
+      "label": { "en": "European Parliament — External Relations", "ar": "البرلمان الأوروبي — العلاقات الخارجية" },
+      "feedUrl": "https://www.europarl.europa.eu/rss/topic/903/en.xml",
+      "homepageUrl": "https://www.europarl.europa.eu/news/en",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "European Parliament — legal notice",
+      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
+    },
+    {
+      "id": "eu-council-press-releases",
+      "label": { "en": "Council of the EU — Press releases", "ar": "مجلس الاتحاد الأوروبي — البيانات الصحفية" },
+      "feedUrl": "https://www.consilium.europa.eu/en/rss/pressreleases.ashx",
+      "homepageUrl": "https://www.consilium.europa.eu/en/press/press-releases/",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
+      "attribution": "Council of the European Union — copyright notice",
+      "attributionUrl": "https://www.consilium.europa.eu/en/about-site/copyright/"
     }
   ]
 }

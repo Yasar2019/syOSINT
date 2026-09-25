@@ -30,10 +30,13 @@ ENGLISH_SOURCE = FeedSource(
 )
 
 
-def test_parses_rss_and_applies_arabic_topic_terms():
+def test_parses_rss_without_applying_topic_terms():
     result = parse_feed(ARABIC_SOURCE, (FIXTURES / "rss.xml").read_bytes(), NOW)
 
-    assert [item.headline for item in result.items] == ["تطور جديد في سوريا"]
+    assert [item.headline for item in result.items] == [
+        "تطور جديد في سوريا",
+        "خبر إقليمي لا يتعلق بالموضوع",
+    ]
     assert result.items[0].url == "https://example.org/reports/1"
     assert result.items[0].published_at == datetime(
         2026, 9, 23, 15, 55, tzinfo=UTC
