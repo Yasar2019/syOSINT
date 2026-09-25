@@ -21,13 +21,13 @@
       "attributionUrl": "https://syriauntold.com/about-syria-untold/"
     },
     {
-      "id": "sana-english",
-      "label": { "en": "SANA — English", "ar": "سانا — الإنجليزية" },
-      "feedUrl": "https://sana.sy/en/feed/", "homepageUrl": "https://sana.sy/en/",
+      "id": "enab-baladi-english",
+      "label": { "en": "Enab Baladi — English", "ar": "عنب بلدي — الإنجليزية" },
+      "feedUrl": "https://english.enabbaladi.net/feed/", "homepageUrl": "https://english.enabbaladi.net/",
       "language": "en", "enabled": true, "topicMode": "keyword-filtered",
       "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib", "Daraa", "Homs", "Raqqa", "Hasakah", "Quneitra"], "excludedTerms": [],
-      "attribution": "Syrian Arab News Agency (SANA) — original headlines and links",
-      "attributionUrl": "https://sana.sy/en/"
+      "attribution": "Enab Baladi — original headlines and links",
+      "attributionUrl": "https://english.enabbaladi.net/about-us/"
     },
     {
       "id": "north-press-english",
