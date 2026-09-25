@@ -85,8 +85,10 @@ def test_public_allowlist_is_balanced_and_reviewed():
     sources = _load_sources(REPOSITORY / "config/rss-sources.json")
     enabled = [source for source in sources if source.enabled]
 
-    assert 8 <= len(enabled) <= 12
+    assert 6 <= len(enabled) <= 12
     assert {source.language for source in enabled} == {"en", "ar"}
+    assert not any(source.id.startswith("european-parliament-") for source in enabled)
+    assert "global-affairs-canada" in {source.id for source in enabled}
     assert all(source.attribution for source in enabled)
     assert all(source.attribution_url for source in enabled)
     assert all(source.topic_mode in {"syria-only", "keyword-filtered"} for source in enabled)
