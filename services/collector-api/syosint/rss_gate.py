@@ -6,7 +6,7 @@ import re
 import subprocess
 import sys
 
-from .rss_cli import _load_sources
+from .rss_cli import SAFE_LOG_CATEGORIES, _load_sources
 from .rss_types import FeedSource
 
 
@@ -51,6 +51,26 @@ def _item_count(stdout: str | bytes | None) -> int | None:
         return None
 
 
+def _failure_category(stdout: str | bytes | None) -> str:
+    try:
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8")
+        value = json.loads(stdout or "")
+        if not isinstance(value, dict) or value.get("status") != "failed":
+            return "check-failed"
+        category = value.get("category")
+        if category not in SAFE_LOG_CATEGORIES | {"parse-failed", "internal-failed"}:
+            return "check-failed"
+        status = value.get("httpStatus")
+        if category == "http-status" and type(status) is int and 400 <= status <= 599:
+            return f"http-status-{status}"
+        if "httpStatus" in value:
+            return "check-failed"
+        return category
+    except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
+        return "check-failed"
+
+
 def check_enabled_sources(
     sources: Sequence[FeedSource],
     *,
@@ -85,7 +105,7 @@ def check_enabled_sources(
             _report(source.id, "execution-failed")
             raise GateFailure("rss gate failed") from None
         if completed.returncode != 0:
-            _report(source.id, "check-failed")
+            _report(source.id, _failure_category(completed.stdout))
             raise GateFailure("rss gate failed")
         items = _item_count(completed.stdout)
         if items is None:
