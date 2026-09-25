@@ -12,16 +12,6 @@
       "attributionUrl": "https://syriauntold.com/about-syria-untold/"
     },
     {
-      "id": "european-parliament-mashreq",
-      "label": { "en": "European Parliament — Mashreq", "ar": "البرلمان الأوروبي — المشرق" },
-      "feedUrl": "https://www.europarl.europa.eu/rss/delegation/dmas/en.xml",
-      "homepageUrl": "https://www.europarl.europa.eu/delegations/en/dmas/home",
-      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
-      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
-      "attribution": "European Parliament — legal notice",
-      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
-    },
-    {
       "id": "syria-untold-arabic",
       "label": { "en": "SyriaUntold — Arabic", "ar": "سوريا على طول — العربية" },
       "feedUrl": "https://syriauntold.com/ar/feed/", "homepageUrl": "https://syriauntold.com/ar/",
@@ -41,14 +31,14 @@
       "attributionUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
     },
     {
-      "id": "european-parliament-foreign-affairs",
-      "label": { "en": "European Parliament — Foreign Affairs", "ar": "البرلمان الأوروبي — الشؤون الخارجية" },
-      "feedUrl": "https://www.europarl.europa.eu/rss/committee/afet/en.xml",
-      "homepageUrl": "https://www.europarl.europa.eu/committees/en/afet/home/highlights",
+      "id": "global-affairs-canada",
+      "label": { "en": "Global Affairs Canada — News", "ar": "الشؤون العالمية الكندية — أخبار" },
+      "feedUrl": "https://api.io.canada.ca/io-server/gc/news/en/v2?atomtitle=Global+Affairs+Canada+news&dept=departmentofforeignaffairstradeanddevelopment&format=atom&orderBy=desc&pick=20&publishedDate%3E=2015-01-01&sort=publishedDate",
+      "homepageUrl": "https://international.canada.ca/en/global-affairs/news/rss",
       "language": "en", "enabled": true, "topicMode": "keyword-filtered",
       "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
-      "attribution": "European Parliament — legal notice",
-      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
+      "attribution": "Global Affairs Canada — Government of Canada terms",
+      "attributionUrl": "https://www.canada.ca/en/transparency/terms.html"
     },
     {
       "id": "european-commission-press",
@@ -59,16 +49,6 @@
       "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
       "attribution": "European Commission — legal notice",
       "attributionUrl": "https://commission.europa.eu/legal-notice_en"
-    },
-    {
-      "id": "european-parliament-external-relations",
-      "label": { "en": "European Parliament — External Relations", "ar": "البرلمان الأوروبي — العلاقات الخارجية" },
-      "feedUrl": "https://www.europarl.europa.eu/rss/topic/903/en.xml",
-      "homepageUrl": "https://www.europarl.europa.eu/news/en",
-      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
-      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib"], "excludedTerms": [],
-      "attribution": "European Parliament — legal notice",
-      "attributionUrl": "https://www.europarl.europa.eu/legal-notice/en"
     },
     {
       "id": "eu-council-press-releases",
