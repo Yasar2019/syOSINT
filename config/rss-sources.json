@@ -30,15 +30,6 @@
       "attributionUrl": "https://sana.sy/en/"
     },
     {
-      "id": "sana-arabic",
-      "label": { "en": "SANA — Arabic", "ar": "سانا — العربية" },
-      "feedUrl": "https://sana.sy/feed/", "homepageUrl": "https://sana.sy/",
-      "language": "ar", "enabled": true, "topicMode": "keyword-filtered",
-      "requiredTerms": ["سوريا", "سوري", "دمشق", "حلب", "إدلب", "درعا", "حمص", "الرقة", "الحسكة", "القنيطرة", "السويداء", "دير الزور"], "excludedTerms": [],
-      "attribution": "الوكالة العربية السورية للأنباء (سانا) — عناوين وروابط المصدر",
-      "attributionUrl": "https://sana.sy/"
-    },
-    {
       "id": "north-press-english",
       "label": { "en": "North Press — English", "ar": "نورث برس — الإنجليزية" },
       "feedUrl": "https://npasyria.com/en/feed/", "homepageUrl": "https://npasyria.com/en/",
@@ -55,15 +46,6 @@
       "requiredTerms": ["سوريا", "سوري", "دمشق", "حلب", "إدلب", "درعا", "حمص", "الرقة", "الحسكة", "القنيطرة", "السويداء", "دير الزور", "القامشلي", "كوباني"], "excludedTerms": [],
       "attribution": "وكالة نورث برس — عناوين وروابط المصدر",
       "attributionUrl": "https://npasyria.com/"
-    },
-    {
-      "id": "enab-baladi-arabic",
-      "label": { "en": "Enab Baladi — Arabic", "ar": "عنب بلدي — العربية" },
-      "feedUrl": "https://enabbaladi.net/feed/", "homepageUrl": "https://enabbaladi.net/",
-      "language": "ar", "enabled": true, "topicMode": "keyword-filtered",
-      "requiredTerms": ["سوريا", "سوري", "دمشق", "حلب", "إدلب", "درعا", "حمص", "الرقة", "الحسكة", "القنيطرة", "السويداء", "دير الزور"], "excludedTerms": [],
-      "attribution": "عنب بلدي — عناوين وروابط المصدر",
-      "attributionUrl": "https://enabbaladi.net/editorial"
     },
     {
       "id": "govuk-syria-news",

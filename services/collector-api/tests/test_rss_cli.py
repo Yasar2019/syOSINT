@@ -90,8 +90,7 @@ def test_public_allowlist_is_balanced_and_reviewed():
     assert not any(source.id.startswith("european-parliament-") for source in enabled)
     assert "global-affairs-canada" in {source.id for source in enabled}
     assert {
-        "sana-english", "sana-arabic", "north-press-english",
-        "north-press-arabic", "enab-baladi-arabic",
+        "sana-english", "north-press-english", "north-press-arabic",
     } <= {source.id for source in enabled}
     assert all(source.attribution for source in enabled)
     assert all(source.attribution_url for source in enabled)
