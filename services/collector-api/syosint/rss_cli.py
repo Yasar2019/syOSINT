@@ -263,18 +263,40 @@ def collect_public(args: argparse.Namespace) -> int:
 
 
 def check_source(args: argparse.Namespace) -> int:
-    now = datetime.now(UTC)
-    fetched = SafeFeedClient().fetch(args.url)
-    source = FeedSource(
-        "check",
-        {"en": "Check", "ar": "فحص"},
-        args.url,
-        args.url,
-        "en",
-        True,
-        ("",),
-    )
-    parsed = parse_feed(source, fetched.content, now)
+    try:
+        now = datetime.now(UTC)
+        fetched = SafeFeedClient().fetch(args.url)
+        source = FeedSource(
+            "check",
+            {"en": "Check", "ar": "فحص"},
+            args.url,
+            args.url,
+            "en",
+            True,
+            ("",),
+        )
+        parsed = parse_feed(source, fetched.content, now)
+    except FeedFetchError as error:
+        category = (
+            error.category
+            if isinstance(error.category, str) and error.category in SAFE_LOG_CATEGORIES
+            else "internal-failed"
+        )
+        result = {"status": "failed", "category": category}
+        if (
+            category == "http-status"
+            and type(error.status_code) is int
+            and 400 <= error.status_code <= 599
+        ):
+            result["httpStatus"] = error.status_code
+        print(json.dumps(result))
+        return 1
+    except ValueError:
+        print(json.dumps({"status": "failed", "category": "parse-failed"}))
+        return 1
+    except Exception:
+        print(json.dumps({"status": "failed", "category": "internal-failed"}))
+        return 1
     print(
         json.dumps(
             {

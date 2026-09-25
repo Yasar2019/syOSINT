@@ -7,7 +7,7 @@ import pytest
 from syosint import rss_cli
 from syosint.rss_collect import CollectionResult, SourceOutcome
 from syosint.rss_cli import _load_sources
-from syosint.safe_http import FetchResult
+from syosint.safe_http import FeedFetchError, FetchResult
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
@@ -35,6 +35,50 @@ def write_config(tmp_path, config):
     path = tmp_path / "sources.json"
     path.write_text(json.dumps(config), encoding="utf-8")
     return path
+
+
+def test_check_source_reports_bounded_http_failure_without_sensitive_text(monkeypatch, capsys):
+    secret = "token=do-not-log"
+
+    class FailingClient:
+        def fetch(self, url):
+            raise FeedFetchError("http-status", status_code=403) from ValueError(secret)
+
+    monkeypatch.setattr(rss_cli, "SafeFeedClient", FailingClient)
+    assert rss_cli.main(["check-source", "--", f"https://example.org/feed?{secret}"]) == 1
+    output = capsys.readouterr()
+    assert json.loads(output.out) == {
+        "status": "failed", "category": "http-status", "httpStatus": 403
+    }
+    assert output.err == ""
+    assert secret not in output.out
+
+
+def test_check_source_reports_parse_failure_without_payload(monkeypatch, capsys):
+    class Client:
+        def fetch(self, url):
+            return FetchResult(200, b"<unsafe secret='token'>", None)
+
+    monkeypatch.setattr(rss_cli, "SafeFeedClient", Client)
+    assert rss_cli.main(["check-source", "--", "https://example.org/feed"]) == 1
+    output = capsys.readouterr()
+    assert json.loads(output.out) == {"status": "failed", "category": "parse-failed"}
+    assert output.err == ""
+
+
+@pytest.mark.parametrize("category", ["secret\ncategory=ok", ["secret"]])
+def test_check_source_sanitizes_unexpected_fetch_category_and_status(
+    monkeypatch, capsys, category
+):
+    class FailingClient:
+        def fetch(self, url):
+            raise FeedFetchError(category, status_code=True)
+
+    monkeypatch.setattr(rss_cli, "SafeFeedClient", FailingClient)
+    assert rss_cli.main(["check-source", "--", "https://example.org/feed"]) == 1
+    output = capsys.readouterr()
+    assert json.loads(output.out) == {"status": "failed", "category": "internal-failed"}
+    assert output.err == ""
 
 
 def test_public_allowlist_is_balanced_and_reviewed():

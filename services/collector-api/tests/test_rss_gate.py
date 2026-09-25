@@ -73,6 +73,37 @@ def test_gate_fails_closed_when_any_check_fails():
         rss_gate.check_enabled_sources((source("failing"),), runner=runner)
 
 
+def test_gate_reports_valid_bounded_failure_category(capsys):
+    def runner(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command, 1, stdout='{"status":"failed","category":"http-status","httpStatus":403}', stderr=""
+        )
+
+    with pytest.raises(rss_gate.GateFailure):
+        rss_gate.check_enabled_sources((source("failing"),), runner=runner)
+    assert capsys.readouterr().out == (
+        "source=failing status=failed category=http-status-403 items=0\n"
+    )
+
+
+@pytest.mark.parametrize("payload", [
+    '{"status":"failed","category":"secret\\nURL"}',
+    '{"status":"failed","category":"http-status","httpStatus":"403"}',
+    '{"status":"failed","category":"http-status","httpStatus":true}',
+    '{"status":"failed","category":"timeout","httpStatus":403}',
+    '{"status":"failed","category":"http-status","httpStatus":999}',
+])
+def test_gate_rejects_untrusted_failure_fields(payload, capsys):
+    def runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, stdout=payload, stderr="private secret")
+
+    with pytest.raises(rss_gate.GateFailure):
+        rss_gate.check_enabled_sources((source("failing"),), runner=runner)
+    assert capsys.readouterr().out == (
+        "source=failing status=failed category=check-failed items=0\n"
+    )
+
+
 def test_gate_discards_malicious_child_output_url_and_option_like_id(capsys):
     secret = "token=do-not-log"
     malicious = source("safe")
