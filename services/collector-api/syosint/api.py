@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
@@ -20,8 +20,8 @@ from .models import (
     Audit,
     Evidence,
     FeedCursor,
-    FeedItem,
-    FeedQuarantine,
+    IntakeItem,
+    IntakeQuarantine,
     Incident,
     Source,
     now,
@@ -291,11 +291,17 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         }
 
     @app.get("/feed-items")
-    def list_feed_items(
+    @app.get("/intake-items")
+    def list_intake_items(
+        request: Request,
         status: Literal["new", "promoted", "attached", "duplicate", "quarantined"] = "new",
         db: Session = Depends(session),
     ):
+        rss_only = request.url.path == "/feed-items"
         if status == "quarantined":
+            query = select(IntakeQuarantine).order_by(IntakeQuarantine.id.desc())
+            if rss_only:
+                query = query.where(IntakeQuarantine.platform == "rss")
             return [
                 {
                     "id": item.id,
@@ -304,11 +310,15 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
                     "headline": item.headline,
                     "reason": item.reason,
                     "collected_at": item.created_at,
+                    **({} if rss_only else {"platform": item.platform, "native_id": item.native_id}),
                 }
-                for item in db.scalars(
-                    select(FeedQuarantine).order_by(FeedQuarantine.id.desc())
-                )
+                for item in db.scalars(query)
             ]
+        query = select(IntakeItem).where(IntakeItem.status == status).order_by(
+            IntakeItem.published_at.desc(), IntakeItem.id.desc()
+        )
+        if rss_only:
+            query = query.where(IntakeItem.platform == "rss")
         return [
             {
                 "id": item.id,
@@ -320,15 +330,17 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
                 "published_at": item.published_at,
                 "collected_at": item.collected_at,
                 "incident_id": item.incident_id,
+                **({} if rss_only else {
+                    "platform": item.platform,
+                    "native_id": item.native_id,
+                    "edited_at": item.edited_at,
+                    "deleted_at": item.deleted_at,
+                }),
             }
-            for item in db.scalars(
-                select(FeedItem)
-                .where(FeedItem.status == status)
-                .order_by(FeedItem.published_at.desc(), FeedItem.id.desc())
-            )
+            for item in db.scalars(query)
         ]
 
-    def add_feed_evidence(db: Session, item: FeedItem, incident: Incident):
+    def add_feed_evidence(db: Session, item: IntakeItem, incident: Incident):
         evidence = Evidence(
             incident_id=incident.id,
             source_id=item.source_id,
@@ -355,14 +367,16 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         return evidence
 
     @app.post("/feed-items/{item_id}/promote", status_code=201)
+    @app.post("/intake-items/{item_id}/promote", status_code=201)
     def promote_feed_item(
         item_id: int,
         payload: PromoteFeedItemInput,
         response: Response,
+        request: Request,
         db: Session = Depends(session),
     ):
-        item = db.get(FeedItem, item_id)
-        if not item:
+        item = db.get(IntakeItem, item_id)
+        if not item or (request.url.path.startswith("/feed-items/") and item.platform != "rss"):
             raise HTTPException(404, "Feed item not found")
         if item.status == "promoted" and item.incident_id:
             response.status_code = 200
@@ -394,14 +408,16 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         return {"incident_id": incident.id, "status": item.status}
 
     @app.post("/feed-items/{item_id}/attach")
+    @app.post("/intake-items/{item_id}/attach")
     def attach_feed_item(
         item_id: int,
         payload: AttachFeedItemInput,
+        request: Request,
         db: Session = Depends(session),
     ):
-        item = db.get(FeedItem, item_id)
+        item = db.get(IntakeItem, item_id)
         incident = db.get(Incident, payload.incident_id)
-        if not item or not incident:
+        if not item or not incident or (request.url.path.startswith("/feed-items/") and item.platform != "rss"):
             raise HTTPException(404, "Feed item or incident not found")
         if incident.state in ("approved", "published", "withdrawn"):
             raise HTTPException(409, "Approved incident is locked")

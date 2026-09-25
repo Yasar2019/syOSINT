@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import uvicorn
@@ -6,7 +7,15 @@ import uvicorn
 from .api import create_app
 
 
-def main():
+def main(argv=None):
+    args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "telegram":
+        from .telegram_cli import run_cli
+
+        return run_cli(args[1:])
+    if args:
+        print("invalid-command")
+        return 2
     root = Path(__file__).resolve().parents[3]
     database_path = Path(os.environ.get("SYOSINT_DB_PATH", str(root / "private-data/syosint.sqlite3")))
     directory = database_path.parent
@@ -16,4 +25,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
