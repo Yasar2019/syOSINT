@@ -86,6 +86,39 @@ def test_gate_reports_valid_bounded_failure_category(capsys):
     )
 
 
+def test_gate_checks_remaining_sources_and_still_fails_closed(capsys):
+    checked = []
+
+    def runner(command, **kwargs):
+        checked.append(command[-1])
+        if "first" in command[-1]:
+            return subprocess.CompletedProcess(command, 1, stdout=(
+                '{"status":"failed","category":"unsupported-content-type"}'
+            ), stderr="")
+        if "third" in command[-1]:
+            return subprocess.CompletedProcess(command, 1, stdout=(
+                '{"status":"failed","category":"http-status","httpStatus":404}'
+            ), stderr="")
+        return subprocess.CompletedProcess(
+            command, 0, stdout='{"status":"ok","entries":2}', stderr=""
+        )
+
+    with pytest.raises(rss_gate.GateFailure):
+        rss_gate.check_enabled_sources(
+            (source("first"), source("second"), source("third")), runner=runner
+        )
+    assert checked == [
+        "https://first.example/feed.xml",
+        "https://second.example/feed.xml",
+        "https://third.example/feed.xml",
+    ]
+    assert capsys.readouterr().out == (
+        "source=first status=failed category=unsupported-content-type items=0\n"
+        "source=second status=ok category=none items=2\n"
+        "source=third status=failed category=http-status-404 items=0\n"
+    )
+
+
 @pytest.mark.parametrize("payload", [
     '{"status":"failed","category":"secret\\nURL"}',
     '{"status":"failed","category":"http-status","httpStatus":"403"}',

@@ -81,6 +81,7 @@ def check_enabled_sources(
     if not enabled:
         _report("config", "no-enabled")
         raise GateFailure("rss gate failed")
+    failed = False
     for source in enabled:
         command = [
             python,
@@ -100,18 +101,24 @@ def check_enabled_sources(
             )
         except subprocess.CalledProcessError:
             _report(source.id, "check-failed")
-            raise GateFailure("rss gate failed") from None
+            failed = True
+            continue
         except Exception:
             _report(source.id, "execution-failed")
-            raise GateFailure("rss gate failed") from None
+            failed = True
+            continue
         if completed.returncode != 0:
             _report(source.id, _failure_category(completed.stdout))
-            raise GateFailure("rss gate failed")
+            failed = True
+            continue
         items = _item_count(completed.stdout)
         if items is None:
             _report(source.id, "invalid-result")
-            raise GateFailure("rss gate failed")
+            failed = True
+            continue
         _report(source.id, "none", items=items)
+    if failed:
+        raise GateFailure("rss gate failed")
 
 
 def build_parser() -> argparse.ArgumentParser:
