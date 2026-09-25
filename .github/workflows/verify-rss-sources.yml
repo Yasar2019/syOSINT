@@ -29,4 +29,4 @@ jobs:
         run: |
           python -m syosint.rss_cli collect-public \
             --config config/rss-sources.json --output /tmp/rss-candidate-wire.json
-          python -c 'import json; wire=json.load(open("/tmp/rss-candidate-wire.json", encoding="utf-8")); assert any(entry["sourceId"] in {"sana-english", "north-press-english", "north-press-arabic"} for entry in wire["entries"]), "no fresh Syria headlines from candidate feeds"'
+          python -c 'import json; wire=json.load(open("/tmp/rss-candidate-wire.json", encoding="utf-8")); assert any(entry["sourceId"] in {"enab-baladi-english", "north-press-english", "north-press-arabic"} for entry in wire["entries"]), "no fresh Syria headlines from candidate feeds"'
