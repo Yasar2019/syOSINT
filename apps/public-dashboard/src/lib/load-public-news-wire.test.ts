@@ -2,10 +2,22 @@ import { describe, expect, it } from "vitest";
 import { loadPublicNewsWire } from "./load-public-news-wire";
 
 const valid = {
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   generatedAt: "2026-09-23T16:00:00Z",
   lastSuccessfulRefreshAt: "2026-09-23T16:00:00Z",
-  sources: { healthy: 1, delayed: 0 },
+  sources: { configured: 1, healthy: 1, delayed: 0 },
+  sourceStates: [
+    {
+      id: "source",
+      label: { en: "Source", ar: "المصدر" },
+      language: "en",
+      attribution: "Source feed attribution",
+      attributionUrl: "https://example.org/legal",
+      status: "healthy",
+      lastSuccessfulRefreshAt: "2026-09-23T16:00:00Z",
+      entryCount: 2,
+    },
+  ],
   entries: [
     {
       id: "source:older",

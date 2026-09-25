@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://syosint.org/schemas/public-news-wire/1.1.0",
-  "title": "syOSINT public news wire",
+  "$id": "https://syosint.org/schemas/public-news-wire/1.0.0",
+  "title": "syOSINT public news wire (legacy 1.0.0)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,26 +9,20 @@
     "generatedAt",
     "lastSuccessfulRefreshAt",
     "sources",
-    "sourceStates",
     "entries"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.1.0" },
+    "schemaVersion": { "const": "1.0.0" },
     "generatedAt": { "type": "string", "format": "date-time" },
     "lastSuccessfulRefreshAt": { "type": "string", "format": "date-time" },
     "sources": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["configured", "healthy", "delayed"],
+      "required": ["healthy", "delayed"],
       "properties": {
-        "configured": { "type": "integer", "minimum": 0 },
         "healthy": { "type": "integer", "minimum": 0 },
         "delayed": { "type": "integer", "minimum": 0 }
       }
-    },
-    "sourceStates": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/sourceState" }
     },
     "entries": {
       "type": "array",
@@ -36,43 +30,6 @@
     }
   },
   "$defs": {
-    "sourceState": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "label",
-        "language",
-        "attribution",
-        "attributionUrl",
-        "status",
-        "lastSuccessfulRefreshAt",
-        "entryCount"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[a-z0-9][a-z0-9-]*$"
-        },
-        "label": { "$ref": "#/$defs/localizedText" },
-        "language": { "enum": ["en", "ar"] },
-        "attribution": { "type": "string", "minLength": 1 },
-        "attributionUrl": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://"
-        },
-        "status": { "enum": ["healthy", "not-modified", "delayed"] },
-        "lastSuccessfulRefreshAt": {
-          "anyOf": [
-            { "type": "string", "format": "date-time" },
-            { "type": "null" }
-          ]
-        },
-        "entryCount": { "type": "integer", "minimum": 0 }
-      }
-    },
     "localizedText": {
       "type": "object",
       "additionalProperties": false,

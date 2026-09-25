@@ -64,5 +64,18 @@ export function validatePublicNewsWire(
     return { ok: false, errors: ["news-wire entry ids must be unique"] };
   }
 
+  const sourceStateIds = value.sourceStates.map((state) => state.id);
+  if (new Set(sourceStateIds).size !== sourceStateIds.length) {
+    return { ok: false, errors: ["news-wire source-state ids must be unique"] };
+  }
+
+  const attributedSourceIds = new Set(sourceStateIds);
+  if (value.entries.some((entry) => !attributedSourceIds.has(entry.sourceId))) {
+    return {
+      ok: false,
+      errors: ["news-wire entries must reference an attributed source state"],
+    };
+  }
+
   return { ok: true, data: value };
 }

@@ -272,6 +272,13 @@ h3 {
   font-weight: 800;
 }
 
+.wire-coverage {
+  margin-block: 18px 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
 .wire-filters {
   display: flex;
   flex-wrap: wrap;
@@ -346,6 +353,41 @@ h3 {
   border-radius: 10px;
   color: var(--muted);
   text-align: center;
+}
+
+.wire-empty p {
+  margin: 0;
+}
+
+.wire-attribution {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--cyan);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.wire-more {
+  display: block;
+  min-block-size: 44px;
+  margin: 16px auto 0;
+  padding: 8px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--cyan-soft);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wire-more:hover {
+  border-color: var(--cyan);
+}
+
+.wire-more:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
 }
 
 .summary-grid {
@@ -951,6 +993,7 @@ button:hover {
   .wire-filters label,
   .wire-filters select {
     inline-size: 100%;
+    min-inline-size: 0;
   }
 
   .timeline,
@@ -1009,6 +1052,7 @@ button:hover {
   .header-actions,
   .filter-panel,
   .wire-filters,
+  .wire-more,
   .map-location-list,
   .incident-card > button,
   .detail-heading button,

@@ -6,7 +6,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    include: ["*.test.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: ["*.test.ts", "scripts/**/*.test.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
     name: "public-dashboard",
     setupFiles: ["./src/test/setup.ts"],
   },

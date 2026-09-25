@@ -9,11 +9,12 @@ Before enabling a public feed, a reviewer must confirm:
 - the feed and every expected redirect use public HTTPS without credentials, cookies, private access, or nonstandard ports;
 - the publisher owns or clearly operates the feed and provides a stable homepage;
 - displaying the original headline with attribution and a link is compatible with the publisher's stated feed terms;
+- a non-empty attribution statement and official HTTPS attribution/licence URL are committed and shown with every public headline;
 - `id`, bilingual source labels, language, homepage, and topic terms are accurate;
 - the feed parses as RSS 2.0 or Atom within the collector's byte and item limits; and
 - broad feeds have deterministic Syria terms that are narrow enough for the public wire.
 
-The initial reviewed entries are UN News — Middle East and BBC Arabic. Their configured terms are `Syria`/`Syrian` and `سوريا`/`سوري`/`سورية`. syOSINT republishes no article body, description, image, or publisher branding. Each entry preserves the publisher label and canonical link; ownership remains with the publisher.
+The current reviewed pool contains eight enabled feeds: SyriaUntold English and Arabic; GOV.UK Syria news; European Parliament Mashreq, Foreign Affairs, and External Relations; European Commission Press Corner; and Council of the EU press releases. The exact endpoints, topic terms, legal evidence, attribution links, rejected candidates, and dated decisions are recorded in [RSS-SOURCE-REVIEWS.md](RSS-SOURCE-REVIEWS.md). syOSINT republishes no article body, description, image, or publisher branding. Each headline preserves its publisher label and canonical link, while each source state exposes the reviewed legal/licence attribution link; ownership remains with the publisher.
 
 To disable a problematic source without losing review history, set `enabled` to `false` and commit the reason. Remove an entry only when its identifier will not be reused. Never silently substitute an unreviewed feed after an endpoint failure.
 
@@ -21,7 +22,9 @@ To disable a problematic source without losing review history, set `enabled` to 
 
 `.github/workflows/rss-wire.yml` runs every 30 minutes and through manual dispatch. It installs Python 3.14, collects enabled feeds, validates `data/public/news-wire.v1.json`, builds the static dashboard, and deploys through GitHub Pages. Entries normally appear within 30–35 minutes, but GitHub queueing and publisher delays can make that longer.
 
-The public dataset is limited to seven days and 500 newest-first entries. It contains only stable ID, source ID and label, language, original headline, canonical URL, publication time, and collection time, plus aggregate healthy/delayed source counts. Every entry is presented as **Unverified external reporting** rather than a syOSINT finding.
+Both Pages workflows run the shared dynamic source gate before collection. It loads the validated allowlist and invokes `check-source` separately for every enabled source. Zero enabled sources or any failed live check stops the run before the public artifact is replaced. Disabled sources are not contacted. The dated evidence and decisions are recorded in [RSS-SOURCE-REVIEWS.md](RSS-SOURCE-REVIEWS.md).
+
+The public dataset is limited to seven days, 100 newest retained entries per source, and 500 newest-first entries globally. Headline entries contain only stable ID, source ID and label, language, original headline, canonical URL, publication time, and collection time. The `1.1.0` contract also contains aggregate configured/healthy/delayed counts plus one visible source state per configured feed: bilingual label, language, `healthy`/`not-modified`/`delayed` status, last successful refresh, retained entry count, and the reviewed attribution statement/link. It exposes no failure detail. Every entry is presented as **Unverified external reporting** rather than a syOSINT finding.
 
 If a source is delayed, the collector may retain its still-current entries from the last valid deployed dataset. If collection, validation, or the build fails, deployment stops and Pages continues serving the previous successful artifact. The initial deployment tolerates a missing prior wire.
 
@@ -40,7 +43,7 @@ The source-health states are:
 - `not-modified`: the publisher returned HTTP 304; this is a successful poll;
 - `delayed`: fetching or parsing failed safely.
 
-Transient timeout, network, DNS, HTTP 408/425/429, and server failures receive at most three attempts with bounded delay and `Retry-After` support. Permanent failures are recorded without continuous retry. Error displays and logs use categories such as `dns-failure`, `timeout`, `network-error`, `http-status`, `unsupported-content-type`, or parser exception type; they do not include response bodies, credentials, or sensitive query strings.
+Transient timeout, network, DNS, HTTP 408/425/429, and server failures receive at most three attempts with bounded delay and `Retry-After` support. Permanent failures are recorded without continuous retry. Workflow logs emit only a validated source identifier, bounded status/category token, and item count; unknown categories become `other`. The GitHub step summary contains aggregate configured/healthy/delayed/item counts only. Neither surface includes exception text, response bodies, URLs, credentials, query strings, or private fields.
 
 Malformed matching items are quarantined rather than published. Item reasons include `missing-headline`, `missing-url`, and `future-published-at`; the private store keeps a digest and safe review fields. A quarantine record does not block other items or sources.
 
