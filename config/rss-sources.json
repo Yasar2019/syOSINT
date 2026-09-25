@@ -21,6 +21,33 @@
       "attributionUrl": "https://syriauntold.com/about-syria-untold/"
     },
     {
+      "id": "sana-english",
+      "label": { "en": "SANA — English", "ar": "سانا — الإنجليزية" },
+      "feedUrl": "https://sana.sy/en/feed/", "homepageUrl": "https://sana.sy/en/",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib", "Daraa", "Homs", "Raqqa", "Hasakah", "Quneitra"], "excludedTerms": [],
+      "attribution": "Syrian Arab News Agency (SANA) — original headlines and links",
+      "attributionUrl": "https://sana.sy/en/"
+    },
+    {
+      "id": "north-press-english",
+      "label": { "en": "North Press — English", "ar": "نورث برس — الإنجليزية" },
+      "feedUrl": "https://npasyria.com/en/feed/", "homepageUrl": "https://npasyria.com/en/",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib", "Daraa", "Homs", "Raqqa", "Hasakah", "Quneitra", "Kobani"], "excludedTerms": [],
+      "attribution": "North Press Agency — original headlines and links",
+      "attributionUrl": "https://npasyria.com/en/"
+    },
+    {
+      "id": "north-press-arabic",
+      "label": { "en": "North Press — Arabic", "ar": "نورث برس — العربية" },
+      "feedUrl": "https://npasyria.com/feed/", "homepageUrl": "https://npasyria.com/",
+      "language": "ar", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["سوريا", "سوري", "دمشق", "حلب", "إدلب", "درعا", "حمص", "الرقة", "الحسكة", "القنيطرة", "السويداء", "دير الزور", "القامشلي", "كوباني"], "excludedTerms": [],
+      "attribution": "وكالة نورث برس — عناوين وروابط المصدر",
+      "attributionUrl": "https://npasyria.com/"
+    },
+    {
       "id": "govuk-syria-news",
       "label": { "en": "GOV.UK — Syria news", "ar": "حكومة المملكة المتحدة — أخبار سوريا" },
       "feedUrl": "https://www.gov.uk/search/news-and-communications.atom?keywords=Syria",
