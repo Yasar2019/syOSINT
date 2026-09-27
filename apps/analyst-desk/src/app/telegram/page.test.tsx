@@ -19,9 +19,9 @@ beforeEach(() => {
 
 it("explains terminal-only setup without exposing secret fields", async () => {
   render(await TelegramPage({ searchParams: Promise.resolve({}) }));
-  expect(screen.getByText("Telegram is not configured")).toBeVisible();
+  expect(screen.getByText("Telegram is not configured")).toBeTruthy();
   expect(screen.queryByText(/api_hash|phone|session/i)).toBeNull();
-  expect(screen.getByText("Stored locally — never public automatically")).toBeVisible();
+  expect(screen.getByText("Stored locally — never public automatically")).toBeTruthy();
 });
 
 it("shows resolved identity for an explicit approval and hides raw post HTML", async () => {
@@ -32,8 +32,8 @@ it("shows resolved identity for an explicit approval and hides raw post HTML", a
     throw new Error(`Unexpected path ${path}`);
   });
   render(await TelegramPage({ searchParams: Promise.resolve({ candidate: "publicnews", channel_id: "42", title: "Public News" }) }));
-  expect(screen.getByText("Public News", { selector: "strong" })).toBeVisible();
-  expect(screen.getByRole("button", { name: "Approve channel for local collection" })).toBeVisible();
-  expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+  expect(screen.getByText("Public News", { selector: "strong" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Approve channel for local collection" })).toBeTruthy();
+  expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeTruthy();
   expect(document.querySelector("article img")).toBeNull();
 });

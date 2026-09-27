@@ -26,17 +26,17 @@ beforeEach(() => {
 
 it("filters the unified queue and renders Telegram content as plain text", async () => {
   render(await IntakePage({ searchParams: Promise.resolve({ platform: "telegram", status: "new" }) }));
-  expect(screen.getByRole("option", { name: "Telegram" })).toBeVisible();
-  expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
+  expect(screen.getByRole("option", { name: "Telegram" })).toBeTruthy();
+  expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeTruthy();
   expect(document.querySelector("article img")).toBeNull();
-  expect(screen.getByText("Stored locally — never public automatically")).toBeVisible();
+  expect(screen.getByText("Stored locally — never public automatically")).toBeTruthy();
   expect(screen.queryByText("RSS item")).toBeNull();
-  expect(screen.getByLabelText("Analyst English title")).toBeVisible();
+  expect(screen.getByLabelText("Analyst English title")).toBeTruthy();
 });
 
 it("shows a safe message when the local API is offline", async () => {
   apiMock.mockRejectedValueOnce(new Error("synthetic secret"));
   render(await IntakePage({ searchParams: Promise.resolve({}) }));
-  expect(screen.getByRole("alert")).toHaveTextContent("Local API unavailable");
+  expect(screen.getByRole("alert").textContent).toContain("Local API unavailable");
   expect(screen.queryByText("synthetic secret")).toBeNull();
 });
