@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     DateTime,
     ForeignKey,
@@ -156,6 +157,7 @@ class IntakeRevision(Base):
 class TelegramCursor(Base):
     __tablename__ = "telegram_cursors"
     source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), primary_key=True)
+    channel_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     last_message_id: Mapped[int | None] = mapped_column(Integer)
     reconcile_from_id: Mapped[int | None] = mapped_column(Integer)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

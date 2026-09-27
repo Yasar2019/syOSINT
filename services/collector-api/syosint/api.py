@@ -24,11 +24,15 @@ from .models import (
     IntakeQuarantine,
     Incident,
     Source,
+    TelegramCursor,
     now,
 )
 from .rss_scheduler import RssScheduler, default_collector
 from .rss_store import store_collection
 from .safe_http import HttpValidators
+from .telegram_collect import ChannelPolicyError, resolve_public_channel, sync_channel
+from .telegram_session import TelegramSettings, safe_auth_state
+from .telegram_scheduler import TelegramScheduler
 
 
 INCIDENT_CATEGORIES = (
@@ -84,6 +88,16 @@ class FeedSourceInput(Strict):
     @classmethod
     def check_url(cls, value):
         return public_url(value)
+
+
+class TelegramResolveInput(Strict):
+    username: str = Field(min_length=5, max_length=32)
+
+
+class TelegramChannelInput(TelegramResolveInput):
+    channel_id: int = Field(gt=0)
+    title: str = Field(min_length=1, max_length=250)
+    language: Literal["en", "ar", "mixed"]
 
 
 class IncidentInput(Strict):
@@ -183,13 +197,31 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         scheduler = None
+        telegram_scheduler = None
         if os.environ.get("SYOSINT_RSS_SCHEDULER", "1") != "0":
             scheduler = RssScheduler(engine)
             app.state.rss_scheduler = scheduler
             scheduler.start()
+        if os.environ.get("SYOSINT_TELEGRAM_SCHEDULER", "1") != "0":
+            try:
+                settings = TelegramSettings.load()
+                if settings.configured:
+                    with Session(engine) as db:
+                        has_source = db.scalar(select(Source.id).where(
+                            Source.kind == "telegram", Source.enabled.is_(True),
+                        ).limit(1)) is not None
+                    if has_source:
+                        telegram_scheduler = TelegramScheduler(engine, settings)
+                        app.state.telegram_scheduler = telegram_scheduler
+                        telegram_scheduler.start()
+            except (ValueError, OSError):
+                # Invalid Telegram-only configuration cannot stop the local API.
+                pass
         try:
             yield
         finally:
+            if telegram_scheduler is not None:
+                await telegram_scheduler.stop()
             if scheduler is not None:
                 await scheduler.stop()
 
@@ -198,16 +230,130 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     app.state.export_dir = export_dir
     app.state.engine = engine
 
+    def session():
+        with Session(engine) as db:
+            yield db
+
+    def telegram_transport():
+        try:
+            settings = TelegramSettings.load()
+        except (ValueError, OSError):
+            raise HTTPException(503, "Telegram not configured") from None
+        if not settings.configured:
+            raise HTTPException(503, "Telegram not configured")
+        factory = getattr(app.state, "telegram_transport_factory", None)
+        if factory is None:
+            from .telegram_scheduler import TelethonReadTransport
+            factory = lambda: TelethonReadTransport(settings)
+        try:
+            return factory()
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+
+    async def close_telegram(transport):
+        disconnect = getattr(transport, "disconnect", None)
+        if disconnect is not None:
+            try:
+                await disconnect()
+            except Exception:
+                pass
+
+    @app.get("/telegram/status")
+    async def telegram_status():
+        try:
+            settings = TelegramSettings.load()
+            state = safe_auth_state(settings)
+        except (ValueError, OSError):
+            state = "not-configured"
+        if state != "not-configured":
+            try:
+                transport = telegram_transport()
+            except HTTPException:
+                return {"state": "reauthentication-required"}
+            try:
+                if await transport.is_authorized():
+                    state = "authenticated"
+            except Exception:
+                state = "reauthentication-required"
+            finally:
+                await close_telegram(transport)
+        return {"state": state}
+
+    @app.post("/telegram/channels/resolve")
+    async def resolve_telegram_channel(item: TelegramResolveInput):
+        transport = telegram_transport()
+        try:
+            channel = await resolve_public_channel(item.username, transport)
+            return {"channel_id": channel.channel_id, "username": channel.username,
+                    "title": channel.title}
+        except ChannelPolicyError as exc:
+            raise HTTPException(422, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+
+    @app.post("/telegram/channels", status_code=201)
+    async def approve_telegram_channel(item: TelegramChannelInput, db: Session = Depends(session)):
+        transport = telegram_transport()
+        try:
+            channel = await resolve_public_channel(item.username, transport)
+        except ChannelPolicyError as exc:
+            raise HTTPException(422, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+        if channel.channel_id != item.channel_id or channel.title != item.title:
+            raise HTTPException(409, "Channel identity changed; resolve again")
+        url = f"https://t.me/{channel.username}"
+        if db.scalar(select(Source).where(Source.url == url)):
+            raise HTTPException(409, "Channel already approved")
+        source = Source(name=channel.title, url=url, language=item.language,
+                        kind="telegram", public_identifier=channel.username,
+                        enabled=True, media_enabled=False)
+        db.add(source)
+        db.flush()
+        db.add(TelegramCursor(source_id=source.id, channel_id=channel.channel_id))
+        record(db, "telegram.channel.approved", "source", source.id,
+               after={"username": channel.username, "language": item.language})
+        db.commit()
+        return {"id": source.id, "username": channel.username,
+                "name": channel.title, "language": item.language, "enabled": True}
+
+    @app.get("/telegram/channels")
+    def list_telegram_channels(db: Session = Depends(session)):
+        return [{"id": source.id, "name": source.name,
+                 "username": source.public_identifier, "language": source.language,
+                 "enabled": source.enabled,
+                 "status": (cursor.last_status if (cursor := db.get(TelegramCursor, source.id)) else None),
+                 "last_success_at": cursor.last_success_at if cursor else None}
+                for source in db.scalars(select(Source).where(Source.kind == "telegram").order_by(Source.id))]
+
+    @app.post("/telegram/channels/{source_id}/sync")
+    async def sync_telegram_channel(source_id: int, db: Session = Depends(session)):
+        source = db.get(Source, source_id)
+        if source is None or source.kind != "telegram" or not source.enabled:
+            raise HTTPException(404, "Approved channel not found")
+        db.expunge(source)
+        transport = telegram_transport()
+        try:
+            summary = await sync_channel(engine, source_id, transport, now())
+            return {"created": summary.created, "duplicates": summary.duplicates,
+                    "quarantined": summary.quarantined}
+        except ChannelPolicyError as exc:
+            raise HTTPException(409, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+
     @app.middleware("http")
     async def enforce_local_origin(request, call_next):
         origin = request.headers.get("origin")
         if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin not in ("http://127.0.0.1:3001", "http://localhost:3001"):
             return JSONResponse({"detail": "Untrusted origin"}, status_code=403)
         return await call_next(request)
-
-    def session():
-        with Session(engine) as db:
-            yield db
 
     @app.post("/sources", status_code=201)
     def add_source(item: SourceInput, db: Session = Depends(session)):

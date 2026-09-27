@@ -135,7 +135,7 @@ def test_shared_companion_records_survive_restart(tmp_path):
     engine = database_at_revision(tmp_path, "0002")
     seed_rss_records(engine)
     assert hasattr(models, "IntakeRevision"), "Shared companion models do not exist yet"
-    command.upgrade(migration_config(engine), "0003")
+    command.upgrade(migration_config(engine), "head")
     with Session(engine) as db:
         db.add(models.IntakeRevision(item_id=41, text="Original private text", raw_digest="a" * 64, edited_at=NOW, collected_at=NOW))
         db.add(models.TelegramCursor(source_id=12, last_message_id=123, reconcile_from_id=100, rate_limit_until=NOW))

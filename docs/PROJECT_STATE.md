@@ -44,7 +44,7 @@ The automatic public path is deliberately narrow: only source identity/status, r
 
 ## Active work
 
-Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–4 are committed: session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, and terminal-only Telegram authentication. Local collector tests pass on Python 3.12; Python 3.14 CI, live collection, and analyst UI remain pending. Task 5 is next: manual public-channel approval and bounded read-only collection. Tasks 6–8 cover optional media, analyst views, and verification. Public Telegram publication is a separate subsequent plan and is not deployed.
+Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–5 implement session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, terminal-only Telegram authentication, and manual public-channel approval with bounded read-only collection and reconciliation. Collector tests pass locally on Python 3.12; Python 3.14 CI is a separate gate. Task 6 is next: optional bounded local media preservation. Tasks 7–8 cover analyst views and verification. Public Telegram publication is a separate subsequent plan and is not deployed.
 
 Active design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 
