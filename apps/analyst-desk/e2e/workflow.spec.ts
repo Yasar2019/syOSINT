@@ -103,7 +103,7 @@ test("unified queue filters local RSS reports and requires analyst promotion", a
     await page.waitForLoadState("networkidle");
   };
   await page.goto("/telegram");
-  await expect(page.getByText("Telegram is not configured")).toBeVisible();
+  await expect(page.getByText("Authenticated locally")).toBeVisible();
   await page.goto("/rss");
   await page.getByLabel("Display name").fill("Unified queue fixture");
   await page.getByLabel("Public homepage URL").fill("https://unified.example");
@@ -134,4 +134,27 @@ test("unified queue filters local RSS reports and requires analyst promotion", a
   const evidence = await (await page.request.get(`http://127.0.0.1:8765/incidents/${incident?.id}/evidence`)).json() as unknown[];
   expect(evidence).toHaveLength(1);
   await expect(page.getByText("Synthetic Syria feed report").first()).toBeVisible();
+});
+
+test("approve a synthetic public channel and keep collected posts private", async ({ page }) => {
+  const submit = async (name: string) => {
+    const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));
+    await page.getByRole("button", { name }).click();
+    await completed;
+    await page.waitForLoadState("networkidle");
+  };
+  await page.goto("/telegram");
+  await page.getByLabel("Public channel username").fill("publicnews");
+  await submit("Preview channel");
+  await expect(page.getByText("Synthetic Public News", { exact: true })).toBeVisible();
+  await submit("Approve channel for local collection");
+  await expect(page.getByText("Synthetic Public News")).toBeVisible();
+  await submit("Sync channel now");
+  await expect(page.getByText("<img src=x onerror=alert(1)> Synthetic local post")).toBeVisible();
+  expect(await page.locator("article img").count()).toBe(0);
+  const items = await (await page.request.get("http://127.0.0.1:8765/intake-items?status=new")).json() as Array<{ platform: string; text: string }>;
+  expect(items.some((item) => item.platform === "telegram" && item.text.includes("Synthetic local post"))).toBe(true);
+  await page.goto("/intake?platform=telegram&status=new");
+  await expect(page.getByText("<img src=x onerror=alert(1)> Synthetic local post")).toBeVisible();
+  await expect(page.getByText("Stored locally — never public automatically")).toBeVisible();
 });
