@@ -2,7 +2,8 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import incidentSchema from "./public-incident.schema.json";
 import newsWireSchema from "./public-news-wire.schema.json";
-import type { PublicDataset, PublicNewsWire } from "./types";
+import telegramWireSchema from "./public-telegram-wire.schema.json";
+import type { PublicDataset, PublicNewsWire, PublicTelegramWire } from "./types";
 
 export type ValidationResult =
   | { ok: true; data: PublicDataset }
@@ -16,6 +17,7 @@ const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const validate = ajv.compile<PublicDataset>(incidentSchema);
 const validateNewsWire = ajv.compile<PublicNewsWire>(newsWireSchema);
+const validateTelegramWire = ajv.compile<PublicTelegramWire>(telegramWireSchema);
 
 export function validatePublicDataset(value: unknown): ValidationResult {
   if (!validate(value)) {
@@ -77,5 +79,44 @@ export function validatePublicNewsWire(
     };
   }
 
+  return { ok: true, data: value };
+}
+
+export type TelegramWireValidationResult =
+  | { ok: true; data: PublicTelegramWire }
+  | { ok: false; errors: string[] };
+
+export function validatePublicTelegramWire(value: unknown): TelegramWireValidationResult {
+  if (!validateTelegramWire(value)) {
+    return { ok: false, errors: (validateTelegramWire.errors ?? []).map(
+      (error) => `${error.instancePath || "/"} ${error.message}`,
+    ) };
+  }
+  const ids = new Set<string>();
+  for (const entry of value.entries) {
+    if (ids.has(entry.id)) return { ok: false, errors: ["telegram entry ids must be unique"] };
+    ids.add(entry.id);
+    const url = new URL(entry.url);
+    const username = url.pathname.split("/")[1];
+    if (username.toLowerCase() !== entry.channel.username.toLowerCase() ||
+        entry.id.split(":").at(-1) !== url.pathname.split("/")[2]) {
+      return { ok: false, errors: ["telegram link must match approved channel username"] };
+    }
+    if (![entry.channel.name, entry.headline.en, entry.headline.ar].every((field) => field.trim())) {
+      return { ok: false, errors: ["public names and headlines cannot be blank"] };
+    }
+    if (entry.status === "active" && entry.revisions.length > 0 ||
+        entry.status !== "active" && entry.revisions.at(-1)?.action !== entry.status) {
+      return { ok: false, errors: ["telegram status must match latest revision"] };
+    }
+    let previous = Date.parse(entry.approvedAt);
+    for (const revision of entry.revisions) {
+      const at = Date.parse(revision.revisedAt);
+      if (at <= previous || !revision.reason.en.trim() || !revision.reason.ar.trim()) {
+        return { ok: false, errors: ["telegram revisions must be ordered and have bilingual reasons"] };
+      }
+      previous = at;
+    }
+  }
   return { ok: true, data: value };
 }

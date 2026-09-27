@@ -88,3 +88,28 @@ export interface PublicNewsWire {
   sourceStates: PublicNewsWireSourceState[];
   entries: PublicNewsWireEntry[];
 }
+
+export interface PublicTelegramRevision {
+  revisedAt: string;
+  action: "corrected" | "withdrawn";
+  reason: LocalizedText;
+  previousHeadline?: LocalizedText;
+}
+
+export interface PublicTelegramEntry {
+  id: string;
+  status: "active" | "corrected" | "withdrawn";
+  channel: { name: string; username: string; language: "en" | "ar" | "mixed" };
+  url: string;
+  headline: LocalizedText;
+  publishedAt: string;
+  approvedAt: string;
+  revisions: PublicTelegramRevision[];
+}
+
+export interface PublicTelegramWire {
+  schemaVersion: "1.0.0";
+  generatedAt: string;
+  lastEditorialUpdateAt: string;
+  entries: PublicTelegramEntry[];
+}
