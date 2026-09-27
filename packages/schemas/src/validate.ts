@@ -112,7 +112,10 @@ export function validatePublicTelegramWire(value: unknown): TelegramWireValidati
     let previous = Date.parse(entry.approvedAt);
     for (const revision of entry.revisions) {
       const at = Date.parse(revision.revisedAt);
-      if (at <= previous || !revision.reason.en.trim() || !revision.reason.ar.trim()) {
+      if (at <= previous || !revision.reason.en.trim() || !revision.reason.ar.trim() ||
+          revision.action === "corrected" && (!revision.previousHeadline ||
+            !revision.previousHeadline.en.trim() || !revision.previousHeadline.ar.trim()) ||
+          revision.action === "withdrawn" && revision.previousHeadline !== undefined) {
         return { ok: false, errors: ["telegram revisions must be ordered and have bilingual reasons"] };
       }
       previous = at;

@@ -76,33 +76,7 @@
         "previousHeadline": {
           "$ref": "#/$defs/localizedText"
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "action": {
-                "const": "corrected"
-              }
-            },
-            "required": [
-              "action"
-            ]
-          },
-          "then": {
-            "required": [
-              "previousHeadline"
-            ]
-          },
-          "else": {
-            "not": {
-              "required": [
-                "previousHeadline"
-              ]
-            }
-          }
-        }
-      ]
+      }
     },
     "entry": {
       "type": "object",
