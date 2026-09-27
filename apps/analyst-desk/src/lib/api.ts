@@ -49,3 +49,21 @@ export type FeedItem = {
   incident_id?: number | null;
   reason?: string;
 };
+
+export type IntakeItem = FeedItem & {
+  platform: "rss" | "telegram";
+  native_id?: string | null;
+  edited_at?: string | null;
+  deleted_at?: string | null;
+};
+export type TelegramStatus = { state: "not-configured" | "reauthentication-required" | "authenticated" | "expired" };
+export type TelegramChannel = {
+  id: number;
+  name: string;
+  username: string;
+  language: "en" | "ar" | "mixed";
+  enabled: boolean;
+  media_enabled: boolean;
+  status: string | null;
+  last_success_at: string | null;
+};
