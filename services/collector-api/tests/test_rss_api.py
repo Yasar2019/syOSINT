@@ -27,7 +27,7 @@ def api(tmp_path: Path, monkeypatch):
     return TestClient(app, base_url="http://127.0.0.1:8765"), url
 
 
-def seed_item(url, *, incident_state=None):
+def seed_item(url, *, incident_state=None, platform="rss"):
     engine = database(url)
     with Session(engine) as db:
         source = db.scalar(select(Source).limit(1))
@@ -36,7 +36,7 @@ def seed_item(url, *, incident_state=None):
                 name="Example feed",
                 url="https://example.org/",
                 language="en",
-                kind="rss",
+                kind=platform,
                 feed_url="https://example.org/rss.xml",
             )
             db.add(source)
@@ -56,6 +56,7 @@ def seed_item(url, *, incident_state=None):
             db.flush()
         item = FeedItem(
             source_id=source.id,
+            platform=platform,
             fingerprint=f"feed-fingerprint-{item_number}",
             native_id=f"native-{item_number}",
             headline="Syria source headline",
@@ -149,17 +150,21 @@ def test_manual_collection_creates_filterable_private_inbox(api, monkeypatch):
     assert client.get("/feed-items", params={"status": "invalid"}).status_code == 422
 
 
-def test_promote_creates_triage_case_and_evidence_once(api):
+@pytest.mark.parametrize("route,platform", [
+    ("/feed-items", "rss"), ("/intake-items", "rss"), ("/intake-items", "telegram"),
+])
+def test_promote_creates_triage_case_and_evidence_once(api, route, platform):
     client, url = api
-    item_id, _ = seed_item(url)
+    item_id, _ = seed_item(url, platform=platform)
     payload = {
         "title_en": "Analyst English title",
         "title_ar": "عنوان المحلل بالعربية",
         "category": "political-security",
     }
 
-    first = client.post(f"/feed-items/{item_id}/promote", json=payload)
-    second = client.post(f"/feed-items/{item_id}/promote", json=payload)
+    first = client.post(f"{route}/{item_id}/promote", json=payload)
+    repeat_route = "/feed-items" if platform == "rss" else route
+    second = client.post(f"{repeat_route}/{item_id}/promote", json=payload)
 
     assert first.status_code == 201
     assert second.status_code == 200
@@ -174,20 +179,81 @@ def test_promote_creates_triage_case_and_evidence_once(api):
         assert evidence.digest == sha256(evidence.text.encode()).hexdigest()
 
 
-def test_attach_rejects_approved_and_is_idempotent_for_open_incident(api):
+@pytest.mark.parametrize("route,platform", [
+    ("/feed-items", "rss"), ("/intake-items", "rss"), ("/intake-items", "telegram"),
+])
+def test_attach_rejects_approved_and_is_idempotent_for_open_incident(api, route, platform):
     client, url = api
-    locked_item, approved_id = seed_item(url, incident_state="approved")
+    locked_item, approved_id = seed_item(url, incident_state="approved", platform=platform)
     assert client.post(
-        f"/feed-items/{locked_item}/attach", json={"incident_id": approved_id}
+        f"{route}/{locked_item}/attach", json={"incident_id": approved_id}
     ).status_code == 409
 
-    second_item, open_id = seed_item(url, incident_state="triage")
+    second_item, open_id = seed_item(url, incident_state="triage", platform=platform)
     first = client.post(
-        f"/feed-items/{second_item}/attach", json={"incident_id": open_id}
+        f"{route}/{second_item}/attach", json={"incident_id": open_id}
     )
-    repeated = client.post(
-        f"/feed-items/{second_item}/attach", json={"incident_id": open_id}
-    )
+    repeat_route = "/feed-items" if platform == "rss" else route
+    repeated = client.post(f"{repeat_route}/{second_item}/attach", json={"incident_id": open_id})
     assert first.status_code == 200
     assert repeated.status_code == 200
     assert len(client.get(f"/incidents/{open_id}/evidence").json()) == 1
+
+
+def test_shared_inbox_exposes_platform_without_changing_feed_schema(api):
+    client, url = api
+    item_id, _ = seed_item(url)
+    legacy = client.get("/feed-items").json()[0]
+    assert set(legacy) == {
+        "id", "source_id", "status", "headline", "url", "text",
+        "published_at", "collected_at", "incident_id",
+    }
+    response = client.get("/intake-items")
+    assert response.status_code == 200
+    shared = response.json()[0]
+    assert {key: shared[key] for key in legacy} == legacy
+    assert shared["platform"] == "rss"
+    assert shared["native_id"] == "native-1"
+    assert shared["edited_at"] is None
+    assert shared["deleted_at"] is None
+    assert shared["id"] == item_id
+    assert client.get("/intake-items", params={"status": "invalid"}).status_code == 422
+
+
+def test_shared_inbox_lists_telegram_and_quarantine_without_creating_evidence(api):
+    from syosint.models import IntakeQuarantine
+
+    client, url = api
+    item_id, _ = seed_item(url)
+    engine = database(url)
+    with Session(engine) as db:
+        item = db.get(FeedItem, item_id)
+        item.platform = "telegram"
+        db.get(Source, item.source_id).kind = "telegram"
+        item.headline = None
+        db.add(IntakeQuarantine(source_id=item.source_id, platform="telegram",
+                                reason="invalid-date", raw_digest="c" * 64, created_at=NOW))
+        db.commit()
+    response = client.get("/intake-items")
+    assert response.status_code == 200
+    assert response.json()[0]["platform"] == "telegram"
+    assert response.json()[0]["headline"] is None
+    assert client.get("/feed-items").json() == []
+    assert client.get("/feed-items", params={"status": "quarantined"}).json() == []
+    assert client.post(f"/feed-items/{item_id}/promote", json={
+        "title_en": "Analyst title", "title_ar": "عنوان المحلل",
+        "category": "political-security",
+    }).status_code == 404
+    assert client.post(f"/feed-items/{item_id}/attach", json={"incident_id": 1}).status_code == 404
+    quarantine = client.get("/intake-items", params={"status": "quarantined"})
+    assert quarantine.status_code == 200
+    assert quarantine.json()[0]["platform"] == "telegram"
+    assert quarantine.json()[0]["reason"] == "invalid-date"
+    with Session(engine) as db:
+        assert db.scalars(select(Evidence)).all() == []
+        assert db.scalars(select(Incident)).all() == []
+    incident_id = client.post("/incidents", json={
+        "title_en": "Analyst title", "title_ar": "عنوان المحلل",
+        "category": "political-security",
+    }).json()["id"]
+    assert client.post(f"/feed-items/{item_id}/attach", json={"incident_id": incident_id}).status_code == 404

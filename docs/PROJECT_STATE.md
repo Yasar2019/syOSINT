@@ -2,14 +2,14 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `feat/public-rss-coverage`
+**Current branch:** `feat/shared-intake-telegram`
 **Last completed milestone:** Milestone 3 — RSS collection and public news wire
-**Current milestone:** Milestone 4 — public RSS expansion PR 1 ready for review; Telegram work pending
-**Source of truth updated:** 2026-09-24
+**Current milestone:** Milestone 4 — public RSS coverage deployed; Telegram intake in progress
+**Source of truth updated:** 2026-09-27
 
 ## Current release state
 
-PRs #1 through #7 are merged into `main`. Milestones 1–3 are deployed, and the latest merged commit is `47d5b57`.
+PRs #1 through #13 are merged into `main`. Milestones 1–3 and Milestone 4's public RSS coverage are deployed; the latest merged commit is `9f6621f`.
 
 The public dashboard provides:
 
@@ -36,7 +36,7 @@ Milestone 3 adds:
 - a bilingual public Live News Wire with source/language filters and stale states;
 - `.github/workflows/rss-wire.yml`, scheduled every 30 minutes with manual dispatch.
 
-Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. Milestone 4 PR 1 replaces the initial pool with eight reviewed feeds: SyriaUntold English and Arabic; GOV.UK Syria news; European Parliament Mashreq, Foreign Affairs, and External Relations; European Commission Press Corner; and Council of the EU press releases. The dated official evidence and rejected candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
+Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. The current allowlist has nine reviewed English and Arabic feeds, including North Press and Enab Baladi English. The dated official evidence and rejected candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
 
 The public wire retains seven days of headlines, capped at 100 per source and 500 globally. Both Pages workflows run a shared fail-closed live gate before collection. Safe logs contain one bounded status line per source and the GitHub summary contains aggregate configured/healthy/delayed/item counts only. A gate, collection, schema, test, or build failure leaves the previous Pages artifact in place. Recovery is to inspect the safe category, rerun after a transient outage, or disable and re-review a permanently changed source; the gate must not be bypassed.
 
@@ -44,7 +44,7 @@ The automatic public path is deliberately narrow: only source identity/status, r
 
 ## Active work
 
-Milestone 4 combines public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design is approved. The first independently releasable public-RSS pull request is implemented and ready for review. Shared intake/Telegram and the public Telegram wire have not been implemented and must not be described as complete.
+Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–6 implement session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, terminal-only Telegram authentication, manual public-channel approval with bounded read-only collection and reconciliation, and optional bounded local media retention. Task 7 adds the private unified intake and Telegram analyst views. Task 8 documents local operation and verifies the full pipeline. The branch remains a draft pending end-to-end CI and safety review. Public Telegram publication is a separate subsequent plan and is not deployed.
 
 Active design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 
@@ -75,6 +75,7 @@ These constraints apply to all future work:
 - Milestone 3 design: `docs/superpowers/specs/2026-09-23-rss-collection-design.md`
 - Milestone 4 design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`
 - RSS operations and source policy: `docs/source-policy/RSS.md`
+- Local Telegram operations: `docs/source-policy/TELEGRAM.md`
 - Public methodology: `docs/methodology/METHODOLOGY.md`
 - Roadmap: `docs/ROADMAP.md`
 - Architectural decisions: `docs/DECISIONS.md`

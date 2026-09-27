@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
@@ -20,15 +20,19 @@ from .models import (
     Audit,
     Evidence,
     FeedCursor,
-    FeedItem,
-    FeedQuarantine,
+    IntakeItem,
+    IntakeQuarantine,
     Incident,
     Source,
+    TelegramCursor,
     now,
 )
 from .rss_scheduler import RssScheduler, default_collector
 from .rss_store import store_collection
 from .safe_http import HttpValidators
+from .telegram_collect import ChannelPolicyError, resolve_public_channel, sync_channel
+from .telegram_session import TelegramSettings, safe_auth_state
+from .telegram_scheduler import TelegramScheduler
 
 
 INCIDENT_CATEGORIES = (
@@ -84,6 +88,20 @@ class FeedSourceInput(Strict):
     @classmethod
     def check_url(cls, value):
         return public_url(value)
+
+
+class TelegramResolveInput(Strict):
+    username: str = Field(min_length=5, max_length=32)
+
+
+class TelegramChannelInput(TelegramResolveInput):
+    channel_id: int = Field(gt=0)
+    title: str = Field(min_length=1, max_length=250)
+    language: Literal["en", "ar", "mixed"]
+
+
+class TelegramMediaPolicyInput(Strict):
+    enabled: bool
 
 
 class IncidentInput(Strict):
@@ -183,13 +201,31 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         scheduler = None
+        telegram_scheduler = None
         if os.environ.get("SYOSINT_RSS_SCHEDULER", "1") != "0":
             scheduler = RssScheduler(engine)
             app.state.rss_scheduler = scheduler
             scheduler.start()
+        if os.environ.get("SYOSINT_TELEGRAM_SCHEDULER", "1") != "0":
+            try:
+                settings = TelegramSettings.load()
+                if settings.configured:
+                    with Session(engine) as db:
+                        has_source = db.scalar(select(Source.id).where(
+                            Source.kind == "telegram", Source.enabled.is_(True),
+                        ).limit(1)) is not None
+                    if has_source:
+                        telegram_scheduler = TelegramScheduler(engine, settings)
+                        app.state.telegram_scheduler = telegram_scheduler
+                        telegram_scheduler.start()
+            except (ValueError, OSError):
+                # Invalid Telegram-only configuration cannot stop the local API.
+                pass
         try:
             yield
         finally:
+            if telegram_scheduler is not None:
+                await telegram_scheduler.stop()
             if scheduler is not None:
                 await scheduler.stop()
 
@@ -198,16 +234,143 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     app.state.export_dir = export_dir
     app.state.engine = engine
 
+    def session():
+        with Session(engine) as db:
+            yield db
+
+    def telegram_transport():
+        try:
+            settings = TelegramSettings.load()
+        except (ValueError, OSError):
+            raise HTTPException(503, "Telegram not configured") from None
+        if not settings.configured:
+            raise HTTPException(503, "Telegram not configured")
+        factory = getattr(app.state, "telegram_transport_factory", None)
+        if factory is None:
+            from .telegram_scheduler import TelethonReadTransport
+            factory = lambda: TelethonReadTransport(settings)
+        try:
+            return factory()
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+
+    async def close_telegram(transport):
+        disconnect = getattr(transport, "disconnect", None)
+        if disconnect is not None:
+            try:
+                await disconnect()
+            except Exception:
+                pass
+
+    @app.get("/telegram/status")
+    async def telegram_status():
+        try:
+            settings = TelegramSettings.load()
+            state = safe_auth_state(settings)
+        except (ValueError, OSError):
+            state = "not-configured"
+        if state != "not-configured":
+            try:
+                transport = telegram_transport()
+            except HTTPException:
+                return {"state": "reauthentication-required"}
+            try:
+                if await transport.is_authorized():
+                    state = "authenticated"
+            except Exception:
+                state = "reauthentication-required"
+            finally:
+                await close_telegram(transport)
+        return {"state": state}
+
+    @app.post("/telegram/channels/resolve")
+    async def resolve_telegram_channel(item: TelegramResolveInput):
+        transport = telegram_transport()
+        try:
+            channel = await resolve_public_channel(item.username, transport)
+            return {"channel_id": channel.channel_id, "username": channel.username,
+                    "title": channel.title}
+        except ChannelPolicyError as exc:
+            raise HTTPException(422, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+
+    @app.post("/telegram/channels", status_code=201)
+    async def approve_telegram_channel(item: TelegramChannelInput, db: Session = Depends(session)):
+        transport = telegram_transport()
+        try:
+            channel = await resolve_public_channel(item.username, transport)
+        except ChannelPolicyError as exc:
+            raise HTTPException(422, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+        if channel.channel_id != item.channel_id or channel.title != item.title:
+            raise HTTPException(409, "Channel identity changed; resolve again")
+        url = f"https://t.me/{channel.username}"
+        if db.scalar(select(Source).where(Source.url == url)):
+            raise HTTPException(409, "Channel already approved")
+        source = Source(name=channel.title, url=url, language=item.language,
+                        kind="telegram", public_identifier=channel.username,
+                        enabled=True, media_enabled=False)
+        db.add(source)
+        db.flush()
+        db.add(TelegramCursor(source_id=source.id, channel_id=channel.channel_id))
+        record(db, "telegram.channel.approved", "source", source.id,
+               after={"username": channel.username, "language": item.language})
+        db.commit()
+        return {"id": source.id, "username": channel.username,
+                "name": channel.title, "language": item.language, "enabled": True}
+
+    @app.get("/telegram/channels")
+    def list_telegram_channels(db: Session = Depends(session)):
+        return [{"id": source.id, "name": source.name,
+                 "username": source.public_identifier, "language": source.language,
+                 "enabled": source.enabled, "media_enabled": source.media_enabled,
+                 "status": (cursor.last_status if (cursor := db.get(TelegramCursor, source.id)) else None),
+                 "last_success_at": cursor.last_success_at if cursor else None}
+                for source in db.scalars(select(Source).where(Source.kind == "telegram").order_by(Source.id))]
+
+    @app.put("/telegram/channels/{source_id}/media-policy")
+    def update_telegram_media_policy(source_id: int, item: TelegramMediaPolicyInput,
+                                     db: Session = Depends(session)):
+        source = db.get(Source, source_id)
+        if source is None or source.kind != "telegram":
+            raise HTTPException(404, "Approved channel not found")
+        previous = bool(source.media_enabled)
+        source.media_enabled = item.enabled
+        record(db, "telegram.media.policy.changed", "source", source_id,
+               before={"enabled": previous}, after={"enabled": item.enabled})
+        db.commit()
+        return {"enabled": item.enabled}
+
+    @app.post("/telegram/channels/{source_id}/sync")
+    async def sync_telegram_channel(source_id: int, db: Session = Depends(session)):
+        source = db.get(Source, source_id)
+        if source is None or source.kind != "telegram" or not source.enabled:
+            raise HTTPException(404, "Approved channel not found")
+        db.expunge(source)
+        transport = telegram_transport()
+        try:
+            summary = await sync_channel(engine, source_id, transport, now())
+            return {"created": summary.created, "duplicates": summary.duplicates,
+                    "quarantined": summary.quarantined}
+        except ChannelPolicyError as exc:
+            raise HTTPException(409, str(exc)) from None
+        except Exception:
+            raise HTTPException(503, "Telegram temporarily unavailable") from None
+        finally:
+            await close_telegram(transport)
+
     @app.middleware("http")
     async def enforce_local_origin(request, call_next):
         origin = request.headers.get("origin")
         if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin not in ("http://127.0.0.1:3001", "http://localhost:3001"):
             return JSONResponse({"detail": "Untrusted origin"}, status_code=403)
         return await call_next(request)
-
-    def session():
-        with Session(engine) as db:
-            yield db
 
     @app.post("/sources", status_code=201)
     def add_source(item: SourceInput, db: Session = Depends(session)):
@@ -291,11 +454,17 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         }
 
     @app.get("/feed-items")
-    def list_feed_items(
+    @app.get("/intake-items")
+    def list_intake_items(
+        request: Request,
         status: Literal["new", "promoted", "attached", "duplicate", "quarantined"] = "new",
         db: Session = Depends(session),
     ):
+        rss_only = request.url.path == "/feed-items"
         if status == "quarantined":
+            query = select(IntakeQuarantine).order_by(IntakeQuarantine.id.desc())
+            if rss_only:
+                query = query.where(IntakeQuarantine.platform == "rss")
             return [
                 {
                     "id": item.id,
@@ -304,11 +473,15 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
                     "headline": item.headline,
                     "reason": item.reason,
                     "collected_at": item.created_at,
+                    **({} if rss_only else {"platform": item.platform, "native_id": item.native_id}),
                 }
-                for item in db.scalars(
-                    select(FeedQuarantine).order_by(FeedQuarantine.id.desc())
-                )
+                for item in db.scalars(query)
             ]
+        query = select(IntakeItem).where(IntakeItem.status == status).order_by(
+            IntakeItem.published_at.desc(), IntakeItem.id.desc()
+        )
+        if rss_only:
+            query = query.where(IntakeItem.platform == "rss")
         return [
             {
                 "id": item.id,
@@ -320,15 +493,17 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
                 "published_at": item.published_at,
                 "collected_at": item.collected_at,
                 "incident_id": item.incident_id,
+                **({} if rss_only else {
+                    "platform": item.platform,
+                    "native_id": item.native_id,
+                    "edited_at": item.edited_at,
+                    "deleted_at": item.deleted_at,
+                }),
             }
-            for item in db.scalars(
-                select(FeedItem)
-                .where(FeedItem.status == status)
-                .order_by(FeedItem.published_at.desc(), FeedItem.id.desc())
-            )
+            for item in db.scalars(query)
         ]
 
-    def add_feed_evidence(db: Session, item: FeedItem, incident: Incident):
+    def add_feed_evidence(db: Session, item: IntakeItem, incident: Incident):
         evidence = Evidence(
             incident_id=incident.id,
             source_id=item.source_id,
@@ -355,14 +530,16 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         return evidence
 
     @app.post("/feed-items/{item_id}/promote", status_code=201)
+    @app.post("/intake-items/{item_id}/promote", status_code=201)
     def promote_feed_item(
         item_id: int,
         payload: PromoteFeedItemInput,
         response: Response,
+        request: Request,
         db: Session = Depends(session),
     ):
-        item = db.get(FeedItem, item_id)
-        if not item:
+        item = db.get(IntakeItem, item_id)
+        if not item or (request.url.path.startswith("/feed-items/") and item.platform != "rss"):
             raise HTTPException(404, "Feed item not found")
         if item.status == "promoted" and item.incident_id:
             response.status_code = 200
@@ -394,14 +571,16 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         return {"incident_id": incident.id, "status": item.status}
 
     @app.post("/feed-items/{item_id}/attach")
+    @app.post("/intake-items/{item_id}/attach")
     def attach_feed_item(
         item_id: int,
         payload: AttachFeedItemInput,
+        request: Request,
         db: Session = Depends(session),
     ):
-        item = db.get(FeedItem, item_id)
+        item = db.get(IntakeItem, item_id)
         incident = db.get(Incident, payload.incident_id)
-        if not item or not incident:
+        if not item or not incident or (request.url.path.startswith("/feed-items/") and item.platform != "rss"):
             raise HTTPException(404, "Feed item or incident not found")
         if incident.state in ("approved", "published", "withdrawn"):
             raise HTTPException(409, "Approved incident is locked")

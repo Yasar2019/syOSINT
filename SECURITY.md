@@ -14,3 +14,9 @@ Security fixes target the current `main` branch. The public dashboard is intenti
 
 Requests to access private channels, bypass platform controls, identify individuals, or publish precise live tactical locations are not accepted as product features.
 
+
+## Private Telegram material
+
+The session under `private-data/telegram/`, local posts, the SQLite database, optional media, and staged exports are private. Keep them outside Git, cloud sync, public issues, and AI/ML services. Restrict the local account and backup permissions. Authentication occurs in an interactive terminal only; report a suspected exposure through private vulnerability reporting and revoke the device authorization in Telegram settings.
+
+Only explicitly approved public channels may be collected. The private desk renders untrusted post text as text, without embeds or remote media. The public dashboard has no automatic Telegram publication path. An analyst must review each future public Telegram item individually.

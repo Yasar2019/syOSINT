@@ -88,7 +88,7 @@ def test_migration_and_records_survive_restart(tmp_path: Path):
     first = TestClient(create_app(app_url, tmp_path / "exports"), base_url="http://127.0.0.1:8765")
     assert first.post("/sources", json={"name": "Journal", "url": "https://example.org", "language": "en"}).status_code == 201
     with sqlite3.connect(vault) as connection:
-        assert connection.execute("select version_num from alembic_version").fetchone()[0] == "0002"
+        assert connection.execute("select version_num from alembic_version").fetchone()[0] == "0004"
     second = TestClient(create_app(app_url, tmp_path / "exports"), base_url="http://127.0.0.1:8765")
     assert second.get("/sources").json()[0]["name"] == "Journal"
     assert len(second.get("/audit").json()) == 1
@@ -111,3 +111,12 @@ def test_corroboration_requires_distinct_sources(tmp_path: Path):
     assert client.post(f"/incidents/{incident_id}/evidence", json={"source_id": second_id, "url": "https://second.example/report", "text": "Independent report", "published_at": "2026-09-23T10:15:00Z"}).status_code == 201
     assert client.post(f"/incidents/{incident_id}/review", json={**review, "rationale": "Two separately registered sources support the core claim."}).status_code == 200
     assert client.post(f"/incidents/{incident_id}/transition", json={"state": "approved", "reason": "Reviewed sources"}).status_code == 200
+
+
+def test_missing_telegram_config_keeps_rss_and_incidents_available(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("SYOSINT_TELEGRAM_API_ID", raising=False)
+    monkeypatch.delenv("SYOSINT_TELEGRAM_API_HASH", raising=False)
+    client = TestClient(create_app(f"sqlite:///{tmp_path / 'vault.sqlite'}", tmp_path / "exports"), base_url="http://127.0.0.1:8765")
+    assert client.get("/telegram/status").json() == {"state": "not-configured"}
+    assert client.get("/feeds").status_code == 200
+    assert client.get("/incidents").status_code == 200

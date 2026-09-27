@@ -124,3 +124,58 @@ export async function exportIncident(form: FormData) {
   } catch (error) { failure(error); }
   redirect(`/incident/${incidentId}?exported=1`);
 }
+
+function deskFailure(error: unknown, page: "intake" | "telegram"): never {
+  const message = error instanceof Error ? error.message : "Action failed";
+  redirect(`/${page}?error=${encodeURIComponent(message.slice(0, 200))}`);
+}
+
+export async function resolveTelegramChannel(form: FormData) {
+  let result: { username: string; channel_id: number; title: string };
+  try {
+    result = await api("/telegram/channels/resolve", "POST", { username: value(form, "username") });
+  } catch (error) { deskFailure(error, "telegram"); }
+  const params = new URLSearchParams({ candidate: result.username, channel_id: String(result.channel_id), title: result.title });
+  redirect(`/telegram?${params.toString()}`);
+}
+
+export async function approveTelegramChannel(form: FormData) {
+  try {
+    await api("/telegram/channels", "POST", {
+      username: value(form, "username"), channel_id: positiveId(form, "channel_id"),
+      title: value(form, "title"), language: value(form, "language"),
+    });
+  } catch (error) { deskFailure(error, "telegram"); }
+  redirect("/telegram");
+}
+
+export async function syncTelegramChannel(form: FormData) {
+  try { await api(`/telegram/channels/${positiveId(form, "source_id")}/sync`, "POST"); }
+  catch (error) { deskFailure(error, "telegram"); }
+  redirect("/telegram");
+}
+
+export async function updateTelegramMediaPolicy(form: FormData) {
+  try {
+    await api(`/telegram/channels/${positiveId(form, "source_id")}/media-policy`, "PUT", { enabled: value(form, "enabled") === "true" });
+  } catch (error) { deskFailure(error, "telegram"); }
+  redirect("/telegram");
+}
+
+export async function promoteIntakeItem(form: FormData) {
+  try {
+    await api(`/intake-items/${positiveId(form, "item_id")}/promote`, "POST", {
+      title_en: value(form, "title_en"), title_ar: value(form, "title_ar"), category: value(form, "category"),
+    });
+  } catch (error) { deskFailure(error, "intake"); }
+  redirect("/intake");
+}
+
+export async function attachIntakeItem(form: FormData) {
+  try {
+    await api(`/intake-items/${positiveId(form, "item_id")}/attach`, "POST", {
+      incident_id: positiveId(form, "incident_id"),
+    });
+  } catch (error) { deskFailure(error, "intake"); }
+  redirect("/intake");
+}
