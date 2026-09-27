@@ -5,7 +5,7 @@
 **Current branch:** `feat/shared-intake-telegram`
 **Last completed milestone:** Milestone 3 — RSS collection and public news wire
 **Current milestone:** Milestone 4 — public RSS coverage deployed; Telegram intake in progress
-**Source of truth updated:** 2026-09-25
+**Source of truth updated:** 2026-09-27
 
 ## Current release state
 
@@ -44,7 +44,7 @@ The automatic public path is deliberately narrow: only source identity/status, r
 
 ## Active work
 
-Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–6 implement session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, terminal-only Telegram authentication, manual public-channel approval with bounded read-only collection and reconciliation, and optional bounded local media retention. Collector tests pass locally on Python 3.12; Python 3.14 CI is a separate gate. Task 7 is next: unified and Telegram analyst views. Task 8 covers verification and operating documentation. Public Telegram publication is a separate subsequent plan and is not deployed.
+Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–6 implement session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, terminal-only Telegram authentication, manual public-channel approval with bounded read-only collection and reconciliation, and optional bounded local media retention. Task 7 adds the private unified intake and Telegram analyst views. Task 8 documents local operation and verifies the full pipeline. The branch remains a draft pending end-to-end CI and safety review. Public Telegram publication is a separate subsequent plan and is not deployed.
 
 Active design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 
@@ -75,6 +75,7 @@ These constraints apply to all future work:
 - Milestone 3 design: `docs/superpowers/specs/2026-09-23-rss-collection-design.md`
 - Milestone 4 design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`
 - RSS operations and source policy: `docs/source-policy/RSS.md`
+- Local Telegram operations: `docs/source-policy/TELEGRAM.md`
 - Public methodology: `docs/methodology/METHODOLOGY.md`
 - Roadmap: `docs/ROADMAP.md`
 - Architectural decisions: `docs/DECISIONS.md`
