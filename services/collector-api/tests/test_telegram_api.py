@@ -128,3 +128,18 @@ def test_status_checks_live_authorization_without_identity_details(api, monkeypa
 
     transport.is_authorized = authorized
     assert client.get("/telegram/status").json() == {"state": "authenticated"}
+
+
+def test_media_policy_is_off_until_analyst_enables_it(api, monkeypatch):
+    client, app, transport = api
+    monkeypatch.setenv("SYOSINT_TELEGRAM_API_ID", "12345")
+    monkeypatch.setenv("SYOSINT_TELEGRAM_API_HASH", "synthetic-secret")
+    source_id = client.post("/telegram/channels", json={
+        "username": "publicnews", "channel_id": 42, "title": "Public News", "language": "en",
+    }).json()["id"]
+    assert client.get("/telegram/channels").json()[0]["media_enabled"] is False
+    response = client.put(f"/telegram/channels/{source_id}/media-policy", json={"enabled": True})
+    assert response.status_code == 200
+    assert client.get("/telegram/channels").json()[0]["media_enabled"] is True
+    assert client.put(f"/telegram/channels/{source_id}/media-policy", json={"enabled": False}).status_code == 200
+    assert client.get("/telegram/channels").json()[0]["media_enabled"] is False

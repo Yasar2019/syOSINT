@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from telethon.tl.types import Channel
 
 from .models import Source, TelegramCursor
+from .telegram_media import purge_expired_media
 from .telegram_client import TelethonAuthClient
 from .telegram_collect import ChannelPolicyError, sync_channel
 from .telegram_session import TelegramSettings, session_path
@@ -48,7 +49,9 @@ class TelethonReadTransport:
         async for item in self._client._client.iter_messages(self._entity, limit=limit):
             if not item.date or item.date < since:
                 break
-            yield TelegramMessage(item.id, item.raw_text or "", item.date, item.edit_date)
+            file = item.file
+            yield TelegramMessage(item.id, item.raw_text or "", item.date, item.edit_date,
+                                  file.mime_type if file else None, file.size if file else None)
 
     async def reconcile_messages(self, channel_id: int, native_ids: tuple[str, ...]) -> tuple[TelegramMessage, ...]:
         if self._entity is None or self._entity.id != channel_id:
@@ -58,6 +61,15 @@ class TelethonReadTransport:
         found = await self._client._client.get_messages(self._entity, ids=[int(value) for value in native_ids])
         return tuple(TelegramMessage(item.id, item.raw_text or "", item.date, item.edit_date)
                      for item in found if item is not None and item.date)
+
+    async def iter_media_chunks(self, channel_id: int, message_id: int):
+        if self._entity is None or self._entity.id != channel_id:
+            raise ChannelPolicyError("channel not resolved")
+        message = await self._client._client.get_messages(self._entity, ids=message_id)
+        if message is None or message.media is None:
+            return
+        async for chunk in self._client._client.iter_download(message.media, request_size=64 * 1024):
+            yield chunk
 
     async def disconnect(self):
         await self._client.disconnect()
@@ -107,7 +119,8 @@ class TelegramScheduler:
             transport = None
             try:
                 transport = self.factory()
-                await sync_channel(self.engine, source_id, transport, now)
+                await sync_channel(self.engine, source_id, transport, now,
+                                   media_root=self.settings.private_dir / "telegram" / "media")
             except Exception as error:
                 # No exception text or identifiers are logged. One source cannot stop another.
                 delay = getattr(error, "seconds", None)
@@ -134,3 +147,9 @@ class TelegramScheduler:
                         await transport.disconnect()
                     except Exception:
                         pass
+        try:
+            with Session(self.engine) as db:
+                purge_expired_media(db, now, self.settings.private_dir / "telegram" / "media")
+        except Exception:
+            # Path violations and filesystem failures never delete an unverified file.
+            pass

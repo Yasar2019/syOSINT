@@ -18,6 +18,8 @@ class TelegramMessage:
     text: str
     published_at: datetime
     edited_at: datetime | None = None
+    media_mime_type: str | None = None
+    media_size: int | None = None
 
 
 @dataclass(frozen=True)

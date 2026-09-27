@@ -100,6 +100,10 @@ class TelegramChannelInput(TelegramResolveInput):
     language: Literal["en", "ar", "mixed"]
 
 
+class TelegramMediaPolicyInput(Strict):
+    enabled: bool
+
+
 class IncidentInput(Strict):
     title_en: str
     title_ar: str
@@ -325,10 +329,23 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     def list_telegram_channels(db: Session = Depends(session)):
         return [{"id": source.id, "name": source.name,
                  "username": source.public_identifier, "language": source.language,
-                 "enabled": source.enabled,
+                 "enabled": source.enabled, "media_enabled": source.media_enabled,
                  "status": (cursor.last_status if (cursor := db.get(TelegramCursor, source.id)) else None),
                  "last_success_at": cursor.last_success_at if cursor else None}
                 for source in db.scalars(select(Source).where(Source.kind == "telegram").order_by(Source.id))]
+
+    @app.put("/telegram/channels/{source_id}/media-policy")
+    def update_telegram_media_policy(source_id: int, item: TelegramMediaPolicyInput,
+                                     db: Session = Depends(session)):
+        source = db.get(Source, source_id)
+        if source is None or source.kind != "telegram":
+            raise HTTPException(404, "Approved channel not found")
+        previous = bool(source.media_enabled)
+        source.media_enabled = item.enabled
+        record(db, "telegram.media.policy.changed", "source", source_id,
+               before={"enabled": previous}, after={"enabled": item.enabled})
+        db.commit()
+        return {"enabled": item.enabled}
 
     @app.post("/telegram/channels/{source_id}/sync")
     async def sync_telegram_channel(source_id: int, db: Session = Depends(session)):

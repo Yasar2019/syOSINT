@@ -4,6 +4,7 @@ import re
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
+from pathlib import Path
 from typing import Protocol
 
 from sqlalchemy import select
@@ -12,7 +13,9 @@ from sqlalchemy.orm import Session
 
 from .intake_store import store_intake_batch
 from .intake_types import NormalizedIntakeItem, QuarantinedIntakeItem
-from .models import IntakeItem, Source, TelegramCursor
+from .models import IntakeItem, MediaAsset, Source, TelegramCursor
+from .telegram_media import ALLOWED_MIME_TYPES, MediaMetadata, MediaPolicy, preserve_media_async
+from .telegram_session import TelegramSettings
 from .telegram_types import ResolvedPublicChannel, SyncSummary, TelegramMessage
 
 
@@ -31,6 +34,7 @@ class TelegramTransport(Protocol):
     async def resolve_username(self, username: str) -> ResolvedPublicChannel: ...
     def iter_messages(self, channel_id: int, *, limit: int, since: datetime) -> AsyncIterator[TelegramMessage]: ...
     async def reconcile_messages(self, channel_id: int, native_ids: tuple[str, ...]) -> tuple[TelegramMessage, ...]: ...
+    def iter_media_chunks(self, channel_id: int, message_id: int) -> AsyncIterator[bytes]: ...
 
 
 async def resolve_public_channel(username: str, transport: TelegramTransport) -> ResolvedPublicChannel:
@@ -65,7 +69,7 @@ def _normalized(source: Source, post: TelegramMessage, now: datetime) -> Normali
 
 
 async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransport,
-                       now: datetime) -> SyncSummary:
+                       now: datetime, *, media_root: Path | None = None) -> SyncSummary:
     """Network work precedes one atomic item/cursor transaction."""
     with Session(engine) as db:
         source = db.get(Source, source_id)
@@ -83,7 +87,8 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
         ).order_by(IntakeItem.id.desc()).limit(RECONCILE_LIMIT)).all()
         previous_ids = tuple(item.native_id for item in previous if item.native_id)
         # All DB sessions are closed before awaiting network I/O.
-        source_snapshot = Source(id=source.id, public_identifier=username)
+        source_snapshot = Source(id=source.id, public_identifier=username,
+                                 media_enabled=source.media_enabled)
 
     entity = await resolve_public_channel(username, transport)
     if entity.channel_id != approved_channel_id:
@@ -91,12 +96,15 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
     since = now - timedelta(days=BACKFILL_DAYS)
     items = []
     quarantined = []
+    media_candidates: dict[str, TelegramMessage] = {}
     max_id = prior_id or 0
     async for post in transport.iter_messages(entity.channel_id, limit=BACKFILL_LIMIT, since=since):
         if post.published_at.tzinfo is None or post.published_at < since:
             continue
         try:
             items.append(_normalized(source_snapshot, post, now))
+            if post.media_mime_type:
+                media_candidates[str(post.message_id)] = post
             max_id = max(max_id, post.message_id)
         except ValueError:
             quarantined.append(QuarantinedIntakeItem(
@@ -113,6 +121,8 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
             if str(post.message_id) not in batch_ids:
                 try:
                     items.append(_normalized(source_snapshot, post, now))
+                    if post.media_mime_type:
+                        media_candidates[str(post.message_id)] = post
                 except ValueError:
                     quarantined.append(QuarantinedIntakeItem(
                         platform="telegram", reason="invalid-post",
@@ -150,5 +160,46 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
                     item.deleted_at = now
 
         summary = store_intake_batch(db, source, items, quarantined, update_cursor, now)
+    if source_snapshot.media_enabled and media_candidates:
+        root = media_root or TelegramSettings.load().private_dir / "telegram" / "media"
+        for native_id, post in media_candidates.items():
+            if post.media_mime_type not in ALLOWED_MIME_TYPES or (
+                post.media_size is not None and (post.media_size <= 0 or post.media_size > 10_000_000)
+            ):
+                continue
+            with Session(engine) as db:
+                current_source = db.get(Source, source_id)
+                if current_source is None or not current_source.media_enabled:
+                    break
+                saved = db.scalar(select(IntakeItem).where(
+                    IntakeItem.source_id == source_id, IntakeItem.platform == "telegram",
+                    IntakeItem.native_id == native_id,
+                ))
+                has_asset = saved is None or db.scalar(select(MediaAsset.id).where(
+                    MediaAsset.item_id == saved.id, MediaAsset.deleted_at.is_(None),
+                ).limit(1)) is not None
+                item_id = saved.id if saved else None
+            if has_asset or item_id is None:
+                continue
+            asset = None
+            try:
+                asset = await preserve_media_async(
+                    transport.iter_media_chunks(entity.channel_id, post.message_id),
+                    MediaMetadata(item_id, post.media_mime_type, now),
+                    MediaPolicy(enabled=True), root,
+                )
+                if asset is not None:
+                    with Session(engine) as db:
+                        current_source = db.get(Source, source_id)
+                        if current_source is None or not current_source.media_enabled:
+                            Path(asset.local_path).unlink(missing_ok=True)
+                            continue
+                        db.add(asset)
+                        db.commit()
+            except Exception:
+                if asset is not None:
+                    Path(asset.local_path).unlink(missing_ok=True)
+                # Item collection remains durable; optional media cannot block it.
+                pass
     oldest = min((item.published_at for item in items), default=None)
     return SyncSummary(summary.created, summary.duplicates, summary.quarantined, oldest)

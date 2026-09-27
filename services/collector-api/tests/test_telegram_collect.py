@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from alembic import command
@@ -7,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from syosint.db import database
-from syosint.models import IntakeItem, IntakeRevision, Source, TelegramCursor
+from syosint.models import IntakeItem, IntakeRevision, MediaAsset, Source, TelegramCursor
 from syosint.telegram_collect import ChannelPolicyError, resolve_public_channel, sync_channel
 from syosint.telegram_types import ResolvedPublicChannel, TelegramMessage
 
@@ -163,3 +164,54 @@ def test_migration_refuses_to_erase_approved_channel_identity(source):
         command.downgrade(config, "0003")
     with Session(engine) as db:
         assert db.get(TelegramCursor, 1).channel_id == 42
+
+
+@pytest.mark.asyncio
+async def test_media_download_is_opt_in_and_stored_only_locally(source, tmp_path):
+    engine, source_id = source
+
+    class MediaTransport(FakeTransport):
+        async def iter_media_chunks(self, channel_id, message_id):
+            self.requests.append(("media", message_id))
+            yield b"synthetic-image"
+
+    post = TelegramMessage(1, "Syria report", NOW - timedelta(hours=1),
+                           media_mime_type="image/png", media_size=15)
+    transport = MediaTransport([post])
+    await sync_channel(engine, source_id, transport, NOW, media_root=tmp_path / "private-media")
+    assert not any(request[0] == "media" for request in transport.requests)
+    with Session(engine) as db:
+        assert db.scalars(select(MediaAsset)).all() == []
+        db.get(Source, source_id).media_enabled = True
+        db.commit()
+    await sync_channel(engine, source_id, transport, NOW + timedelta(minutes=10),
+                       media_root=tmp_path / "private-media")
+    with Session(engine) as db:
+        saved = db.scalar(select(MediaAsset))
+        assert saved is not None
+        assert saved.mime_type == "image/png"
+        assert (tmp_path / "private-media").resolve() in Path(saved.local_path).resolve().parents
+    assert transport.requests.count(("media", 1)) == 1
+
+
+@pytest.mark.asyncio
+async def test_optional_media_failure_does_not_erase_collected_post(source, tmp_path):
+    engine, source_id = source
+    with Session(engine) as db:
+        db.get(Source, source_id).media_enabled = True
+        db.commit()
+
+    class FailingMedia(FakeTransport):
+        async def iter_media_chunks(self, channel_id, message_id):
+            yield b"prefix"
+            raise RuntimeError("synthetic-private-error")
+
+    post = TelegramMessage(2, "Syria report", NOW - timedelta(hours=1),
+                           media_mime_type="image/png", media_size=42)
+    result = await sync_channel(engine, source_id, FailingMedia([post]), NOW,
+                                media_root=tmp_path / "private-media")
+    assert result.created == 1
+    with Session(engine) as db:
+        assert len(db.scalars(select(IntakeItem)).all()) == 1
+        assert db.scalars(select(MediaAsset)).all() == []
+    assert list((tmp_path / "private-media").iterdir()) == []
