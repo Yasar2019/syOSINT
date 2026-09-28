@@ -2,7 +2,7 @@
 
 syOSINT is an open-source, bilingual situational-awareness workspace for journalists and OSINT researchers monitoring public reporting about Syria. It is designed around traceable evidence, human verification, explicit uncertainty, and safety-aware publication.
 
-> **Current milestone:** Milestones 1–3 and the expanded public RSS news wire are deployed. Local Telegram intake and private analyst views have merged. The individually approved public Telegram wire is under review in draft PR #15. The reviewed incident dataset remains synthetic until a human explicitly publishes approved incident records.
+> **Current milestone:** Milestones 1–3 and the expanded public RSS news wire are deployed. Local Telegram intake, private analyst views, and the individually approved public Telegram wire have merged into `main` through PR #15. Confirm the Pages deployment before treating the Telegram view as live. The tracked Telegram dataset has no approved posts yet, and reviewed incidents remain synthetic until a human explicitly publishes approved records.
 
 ## Principles
 
@@ -122,7 +122,7 @@ After merging to `main`, select **Settings → Pages → Source → GitHub Actio
 
 ## Roadmap
 
-The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. RSS collection is implemented in Milestone 3. Local public-channel Telegram intake has merged into main; the individually approved public Telegram wire is under review in draft PR #15.
+The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. RSS collection is implemented in Milestone 3. Local public-channel Telegram intake and the individually reviewed Telegram publication workflow have merged into `main` through PRs #14 and #15. The tracked public Telegram artifact remains empty until an analyst stages an individually approved post.
 
 ## License
 
