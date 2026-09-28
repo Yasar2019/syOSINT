@@ -1,8 +1,9 @@
 import hashlib
 import ipaddress
 import os
+from threading import Lock
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -25,6 +26,8 @@ from .models import (
     Incident,
     Source,
     TelegramCursor,
+    TelegramPublication,
+    TelegramPublicationPreview,
     now,
 )
 from .rss_scheduler import RssScheduler, default_collector
@@ -32,6 +35,12 @@ from .rss_store import store_collection
 from .safe_http import HttpValidators
 from .telegram_collect import ChannelPolicyError, resolve_public_channel, sync_channel
 from .telegram_session import TelegramSettings, safe_auth_state
+from .telegram_publication import (
+    PublicationConflict, PublicationPayload, approve_publication,
+    build_publication_preview, correct_publication, withdraw_publication,
+    publication_attention,
+)
+from .telegram_export import PublicSchemaError, write_pending_telegram_export
 from .telegram_scheduler import TelegramScheduler
 
 
@@ -102,6 +111,31 @@ class TelegramChannelInput(TelegramResolveInput):
 
 class TelegramMediaPolicyInput(Strict):
     enabled: bool
+
+
+
+class PublicationPreviewInput(Strict):
+    headline_en: str = Field(min_length=3, max_length=240)
+    headline_ar: str = Field(min_length=3, max_length=240)
+    source_identity_checked: bool
+    person_safety_checked: bool
+    operational_safety_checked: bool
+    human_approved: bool
+
+
+class PublicationApprovalInput(PublicationPreviewInput):
+    draft_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class PublicationCorrectionInput(PublicationPreviewInput):
+    reason_en: str = Field(min_length=3, max_length=240)
+    reason_ar: str = Field(min_length=3, max_length=240)
+
+
+class PublicationWithdrawalInput(Strict):
+    reason_en: str = Field(min_length=3, max_length=240)
+    reason_ar: str = Field(min_length=3, max_length=240)
+    human_approved: bool
 
 
 class IncidentInput(Strict):
@@ -233,6 +267,7 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
     app.state.export_dir = export_dir
     app.state.engine = engine
+    publication_lock = Lock()
 
     def session():
         with Session(engine) as db:
@@ -364,6 +399,105 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
             raise HTTPException(503, "Telegram temporarily unavailable") from None
         finally:
             await close_telegram(transport)
+
+
+    def pending_telegram_export(db: Session):
+        records = [publication.record for publication in db.scalars(
+            select(TelegramPublication).order_by(TelegramPublication.id))]
+        pending_path = app.state.export_dir / "telegram-pending.v1.json"
+        try:
+            # If rewriting fails, an old artifact must not be stageable after
+            # a committed correction or withdrawal.
+            if pending_path.parent.is_symlink():
+                raise PublicSchemaError("unsafe pending export directory")
+            pending_path.unlink(missing_ok=True)
+            write_pending_telegram_export(app.state.export_dir, records, now())
+        except (OSError, ValueError, PublicSchemaError):
+            raise HTTPException(503, "Pending editorial export unavailable") from None
+
+    @app.post("/telegram-publications/export-pending")
+    def rebuild_pending_telegram_export(db: Session = Depends(session)):
+        with publication_lock:
+            pending_telegram_export(db)
+        return {"status": "pending-export-ready"}
+
+    @app.get("/telegram-publication-previews/{draft_hash}")
+    def get_telegram_publication_preview(draft_hash: str, db: Session = Depends(session)):
+        if len(draft_hash) != 64 or any(character not in "0123456789abcdef" for character in draft_hash):
+            raise HTTPException(404, "Preview unavailable")
+        draft = db.scalar(select(TelegramPublicationPreview).where(
+            TelegramPublicationPreview.draft_hash == draft_hash))
+        if draft is None or (draft.expires_at.replace(tzinfo=UTC) if draft.expires_at.tzinfo is None else draft.expires_at) < now():
+            raise HTTPException(404, "Preview expired; review again")
+        return {"item_id": draft.item_id, "draft_hash": draft.draft_hash, "record": draft.record}
+
+    @app.get("/intake-items/{item_id}/publication")
+    def get_telegram_publication(item_id: int, db: Session = Depends(session)):
+        publication = db.scalar(select(TelegramPublication).where(
+            TelegramPublication.item_id == item_id))
+        if publication is None:
+            raise HTTPException(404, "Publication unavailable")
+        return {"id": publication.id, "public_id": publication.public_id,
+                "status": publication.status, "record": publication.record}
+
+    @app.post("/intake-items/{item_id}/publication-preview")
+    def preview_telegram_publication(item_id: int, item: PublicationPreviewInput,
+                                     db: Session = Depends(session)):
+        try:
+            draft = build_publication_preview(
+                db, item_id, PublicationPayload(**item.model_dump()))
+        except PublicationConflict as error:
+            raise HTTPException(409, str(error)) from None
+        return {"draft_hash": draft.draft_hash, "record": draft.record}
+
+    @app.post("/intake-items/{item_id}/publication-approve")
+    def approve_telegram_publication(item_id: int, item: PublicationApprovalInput,
+                                     db: Session = Depends(session)):
+        draft = db.scalar(select(TelegramPublicationPreview).where(
+            TelegramPublicationPreview.draft_hash == item.draft_hash))
+        if draft is None or draft.item_id != item_id:
+            raise HTTPException(409, "Preview belongs to a different item")
+        with publication_lock:
+            # The preview ownership read happened outside this lock. Start a
+            # fresh transaction so capacity checks see preceding approvals.
+            db.rollback()
+            try:
+                publication = approve_publication(
+                    db, item.draft_hash, PublicationPayload(**item.model_dump(exclude={"draft_hash"})))
+            except PublicationConflict as error:
+                raise HTTPException(409, str(error)) from None
+            pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.post("/telegram-publications/{publication_id}/correct")
+    def correct_telegram_publication(publication_id: int, item: PublicationCorrectionInput,
+                                     db: Session = Depends(session)):
+        with publication_lock:
+            try:
+                publication = correct_publication(
+                    db, publication_id,
+                    PublicationPayload(**item.model_dump(exclude={"reason_en", "reason_ar"})),
+                    item.reason_en, item.reason_ar)
+            except PublicationConflict as error:
+                raise HTTPException(409, str(error)) from None
+            pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.post("/telegram-publications/{publication_id}/withdraw")
+    def withdraw_telegram_publication(publication_id: int, item: PublicationWithdrawalInput,
+                                      db: Session = Depends(session)):
+        with publication_lock:
+            try:
+                publication = withdraw_publication(
+                    db, publication_id, item.reason_en, item.reason_ar, item.human_approved)
+            except PublicationConflict as error:
+                raise HTTPException(409, str(error)) from None
+            pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.get("/telegram-publications/attention")
+    def list_telegram_publication_attention(db: Session = Depends(session)):
+        return publication_attention(db)
 
     @app.middleware("http")
     async def enforce_local_origin(request, call_next):

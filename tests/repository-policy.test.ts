@@ -35,10 +35,11 @@ describe("repository safety policy", () => {
     expect(workflow).toMatch(/concurrency:\s*\n\s+group:\s*pages/);
     expect(workflow).toContain("python-version: '3.14'");
     expect(workflow).toContain("collect:rss:public");
-    expect(workflow).toContain("validatePublicNewsWire");
-    expect(workflow.indexOf("validatePublicNewsWire")).toBeLessThan(
+    expect(workflow).toContain("Validate refreshed RSS and tracked Telegram public wires");
+    expect(workflow.indexOf("sync-public-data.mjs")).toBeLessThan(
       workflow.indexOf("pnpm build"),
     );
+    expect(workflow).not.toMatch(/TELEGRAM_API|telegram login|telegram sync/);
     expect(workflow).toContain("actions/upload-pages-artifact@v3");
     expect(workflow).toContain("actions/deploy-pages@v4");
   });

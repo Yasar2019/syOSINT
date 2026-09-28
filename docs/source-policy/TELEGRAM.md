@@ -1,6 +1,6 @@
 # Local Telegram intake
 
-Telegram collection runs only in the private analyst service on your computer. The public dashboard currently has **no Telegram wire**: approving a channel collects posts locally; promoting a post creates a triage case; neither publishes a Telegram post. Public Telegram publication is a separate, individually reviewed future workflow.
+Telegram collection runs only in the private analyst service on your computer. Approving a channel collects posts locally; promoting a post creates a triage case. Public Telegram publication requires separate review of each item and a separate staged data change in Git.
 
 ## Setup
 
@@ -23,6 +23,19 @@ Run `python -m syosint telegram status` to check your local authorization and `p
 2. Resolve a **public** username. Verify the preview, including the immutable numeric channel ID and title, against the publisher's official channel. Approve it explicitly; the server resolves it again and rejects a changed identity. Do not enter private, invite-only, or uncertain channels.
 3. Sync manually or let the local scheduler run while your API is open. Backfill is capped at seven days and 500 posts; periodic reconciliation checks recent posts for edits and deletions. Rate-limit waits are isolated per channel and shown through safe status values. No collection occurs while your local API is closed.
 4. Review the channel health and unverified posts in the private Telegram page, then use `/intake` to filter by platform, status, source, language, and date. Read original source links, revisions, and deletion flags before writing bilingual analyst titles or attaching evidence to a case. Incident approval and export require separate human review.
+
+## Publish an individual report
+
+1. From `/telegram`, open a post's **Review for public publication** link. Review the original locally. Write English and Arabic headlines yourself, check the channel identity, person and operational safety, and confirm your own review. Select **Preview public Telegram lead**.
+2. Inspect the exact sanitized public JSON, then explicitly authorize that record and select **Approve public Telegram lead**. A changed or deleted source invalidates the draft. The approval stays local and is not an automatic website update.
+3. The private API writes `pending-exports/telegram-pending.v1.json` after an approval, correction, or withdrawal (or under `SYOSINT_EXPORT_DIR` if configured). Pending exports remain gitignored and private. Stage the generated file with `python -m syosint.telegram_publish_cli stage --confirm-publication --pending pending-exports/telegram-pending.v1.json --output data/public/telegram-wire.v1.json`.
+4. Review the staged JSON and diff, then submit and merge the public data change. Both Pages workflows validate the RSS and Telegram contracts before deployment. A Telegram correction or withdrawal also requires an explicit local editorial action, a new pending export and staging, and a new public data change. The public site keeps corrections and withdrawal notices within seven days of the original post.
+
+If an editorial action reports **Pending editorial export unavailable**, an older pending artifact is removed so it cannot be staged accidentally. Fix the local disk or export-directory error, then regenerate the current approved state through `POST http://127.0.0.1:8765/telegram-publications/export-pending` before staging. The private database retains the audit history. A lead must be reviewed within seven days of its original publication, and the public wire accepts at most 500 leads in its active window.
+
+Run one local API process against the private database. The publication and pending-export lock serializes approvals, corrections, and withdrawals inside that process.
+
+Public records contain a manually written bilingual headline, the approved public channel identity, canonical `t.me` URL, timestamps, and editorial correction history. They carry the label **Reviewed external Telegram report — not independently verified**. No original post text, private notes or media is staged. Telegram-derived material must never be sent to AI or machine-learning systems.
 
 Text is untrusted and displayed as plain text. Do not paste raw Telegram content into AI assistants or AI/ML services. Do not commit the private database, downloaded posts, media, or session files.
 

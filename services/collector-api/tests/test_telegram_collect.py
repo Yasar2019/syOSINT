@@ -109,6 +109,38 @@ async def test_edits_create_private_revisions_and_replays_do_not_duplicate(sourc
 
 
 @pytest.mark.asyncio
+async def test_edit_timestamp_changes_digest_even_when_post_text_is_unchanged(source):
+    engine, source_id = source
+    await sync_channel(engine, source_id, FakeTransport([message(1)]), NOW)
+    with Session(engine) as db:
+        original = db.scalar(select(IntakeItem))
+        original_digest = original.raw_digest
+    edited = message(1, edited_at=NOW)
+    await sync_channel(engine, source_id, FakeTransport([edited]), NOW + timedelta(minutes=1))
+    with Session(engine) as db:
+        item = db.scalar(select(IntakeItem))
+        assert item.raw_digest != original_digest
+        assert item.edited_at == NOW.replace(tzinfo=None)
+        assert len(db.scalars(select(IntakeRevision)).all()) == 1
+    await sync_channel(engine, source_id, FakeTransport([edited]), NOW + timedelta(minutes=2))
+    with Session(engine) as db:
+        assert len(db.scalars(select(IntakeRevision)).all()) == 1
+
+
+@pytest.mark.asyncio
+async def test_media_metadata_changes_digest_even_when_caption_is_unchanged(source):
+    engine, source_id = source
+    await sync_channel(engine, source_id, FakeTransport([message(1)]), NOW)
+    with Session(engine) as db:
+        original_digest = db.scalar(select(IntakeItem)).raw_digest
+    changed = TelegramMessage(1, "Syria report", NOW - timedelta(hours=1),
+                              media_mime_type="image/jpeg", media_size=1234)
+    await sync_channel(engine, source_id, FakeTransport([changed]), NOW + timedelta(minutes=1))
+    with Session(engine) as db:
+        assert db.scalar(select(IntakeItem)).raw_digest != original_digest
+
+
+@pytest.mark.asyncio
 async def test_failed_collection_does_not_advance_cursor(source):
     engine, source_id = source
     with pytest.raises(RuntimeError, match="offline"):

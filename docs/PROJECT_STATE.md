@@ -2,14 +2,14 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `feat/shared-intake-telegram`
+**Current branch:** `feat/public-telegram-wire`
 **Last completed milestone:** Milestone 3 — RSS collection and public news wire
-**Current milestone:** Milestone 4 — public RSS coverage deployed; Telegram intake in progress
-**Source of truth updated:** 2026-09-27
+**Current milestone:** Milestone 4 — public RSS coverage and local Telegram intake deployed; public Telegram wire in draft PR #15
+**Source of truth updated:** 2026-09-28
 
 ## Current release state
 
-PRs #1 through #13 are merged into `main`. Milestones 1–3 and Milestone 4's public RSS coverage are deployed; the latest merged commit is `9f6621f`.
+PRs #1 through #14 are merged into `main`. Milestones 1–3 and Milestone 4's public RSS coverage and local Telegram intake are merged. Draft PR #15 adds the public Telegram publication workflow; it has not been merged or deployed.
 
 The public dashboard provides:
 
@@ -44,7 +44,7 @@ The automatic public path is deliberately narrow: only source identity/status, r
 
 ## Active work
 
-Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The written design and plans are approved. On `feat/shared-intake-telegram`, Tasks 1–6 implement session settings, an identity-preserving shared-intake migration, RSS-compatible private intake, terminal-only Telegram authentication, manual public-channel approval with bounded read-only collection and reconciliation, and optional bounded local media retention. Task 7 adds the private unified intake and Telegram analyst views. Task 8 documents local operation and verifies the full pipeline. The branch remains a draft pending end-to-end CI and safety review. Public Telegram publication is a separate subsequent plan and is not deployed.
+Milestone 4 combines deployed public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The local intake and analyst views merged through PR #14. On `feat/public-telegram-wire`, draft PR #15 adds a versioned and validated public Telegram contract, append-only private editorial review, item-specific preview and approval, a private pending export, manual staging, bilingual public presentation, and dual-contract Pages validation. A channel approval still only enables private collection. Public deployment requires a reviewed and merged public data change; no Telegram post is automatically published. PR #15 remains a draft pending CI and review.
 
 Active design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 

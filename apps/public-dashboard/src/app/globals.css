@@ -228,6 +228,64 @@ h3 {
   box-shadow: var(--shadow);
 }
 
+.reporting-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 20px;
+}
+
+.reporting-controls {
+  margin-block-end: 18px;
+  padding: 12px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--navy-850);
+}
+
+.reporting-controls .wire-filters {
+  margin-block: 10px 0;
+}
+
+.reporting-controls input[type="date"] {
+  min-block-size: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--navy-950);
+  color: var(--ink);
+  padding-inline: 10px;
+  color-scheme: dark;
+}
+
+.reporting-tabs button {
+  padding-inline: 14px;
+  font-weight: 700;
+}
+
+.reporting-tabs button[aria-selected="true"] {
+  border-color: var(--cyan);
+  background: var(--cyan-soft);
+}
+
+.telegram-status {
+  margin-block: 10px 0;
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.telegram-revisions {
+  margin-block-start: 16px;
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.telegram-revisions ol {
+  padding-inline-start: 22px;
+}
+
 .news-wire-heading {
   display: flex;
   justify-content: space-between;

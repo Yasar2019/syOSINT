@@ -4,6 +4,7 @@ import { api, type IntakeItem, type TelegramChannel, type TelegramStatus } from 
 
 export const dynamic = "force-dynamic";
 type Params = { candidate?: string; channel_id?: string; title?: string; error?: string };
+type Attention = { id: number; item_id: number; public_id: string; reason: "source-edited" | "source-deleted" | "channel-changed" };
 function stamp(value?: string | null) {
   if (!value) return "Never";
   const date = new Date(value);
@@ -15,12 +16,14 @@ export default async function TelegramPage({ searchParams }: { searchParams: Pro
   let status: TelegramStatus = { state: "not-configured" };
   let channels: TelegramChannel[] = [];
   let posts: IntakeItem[] = [];
+  let attention: Attention[] = [];
   let offline = false;
   try {
-    [status, channels, posts] = await Promise.all([
+    [status, channels, posts, attention] = await Promise.all([
       api<TelegramStatus>("/telegram/status"),
       api<TelegramChannel[]>("/telegram/channels"),
       api<IntakeItem[]>("/intake-items?status=new"),
+      api<Attention[]>("/telegram-publications/attention"),
     ]);
   } catch { offline = true; }
   const telegramPosts = posts.filter((post) => post.platform === "telegram");
@@ -62,6 +65,14 @@ export default async function TelegramPage({ searchParams }: { searchParams: Pro
       </li>)}
       {channels.length === 0 && <li>No channels approved yet.</li>}
     </ul></section>
+    {attention.length > 0 && <section className="panel" aria-label="Editorial attention queue">
+      <h2>Public leads needing urgent review · {attention.length}</h2>
+      <p>Edits or deletions never change the public record automatically. Review the exact record and explicitly correct or withdraw it.</p>
+      <ul className="list">{attention.map((notice) => <li key={notice.id}>
+        <span>{notice.public_id} · <strong>{notice.reason}</strong></span>{" "}
+        <Link href={`/telegram/publication/${notice.item_id}`}>Review changed public lead</Link>
+      </li>)}</ul>
+    </section>}
     <section className="panel"><h2>New posts · {telegramPosts.length}</h2><div className="feed-items">
       {telegramPosts.map((post) => <article key={post.id} className="feed-item">
         <div className="feed-item-head"><span className="pill">unverified report</span><small>{stamp(post.published_at)}</small></div>
@@ -71,6 +82,7 @@ export default async function TelegramPage({ searchParams }: { searchParams: Pro
         {post.deleted_at && <p className="alert">Source post deleted; review before use.</p>}
         <p className="privacy-note">Stored locally — never public automatically</p>
         <Link href="/intake?platform=telegram&status=new">Review in unified intake →</Link>
+        {post.status === "new" && <p><Link href={`/telegram/publication/${post.id}`}>Review this post for publication</Link></p>}
       </article>)}
       {telegramPosts.length === 0 && <p>No new posts.</p>}
     </div></section>

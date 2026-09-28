@@ -182,6 +182,41 @@ class MediaAsset(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class TelegramPublicationPreview(Base):
+    __tablename__ = "telegram_publication_previews"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("intake_items.id"))
+    draft_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    source_digest: Mapped[str] = mapped_column(String(64))
+    record: Mapped[dict] = mapped_column(JSON)
+    safety: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TelegramPublication(Base):
+    __tablename__ = "telegram_publications"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("intake_items.id"), unique=True)
+    public_id: Mapped[str] = mapped_column(String(120), unique=True)
+    source_digest: Mapped[str] = mapped_column(String(64))
+    record: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(20))
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TelegramPublicationRevision(Base):
+    __tablename__ = "telegram_publication_revisions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    publication_id: Mapped[int] = mapped_column(ForeignKey("telegram_publications.id"), index=True)
+    action: Mapped[str] = mapped_column(String(20))
+    reason_en: Mapped[str] = mapped_column(Text)
+    reason_ar: Mapped[str] = mapped_column(Text)
+    previous_headline_en: Mapped[str | None] = mapped_column(Text)
+    previous_headline_ar: Mapped[str | None] = mapped_column(Text)
+    revised_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 # Transitional names while Task 3 adapts the RSS store and API call sites.
 FeedItem = IntakeItem
 FeedQuarantine = IntakeQuarantine

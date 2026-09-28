@@ -179,3 +179,63 @@ export async function attachIntakeItem(form: FormData) {
   } catch (error) { deskFailure(error, "intake"); }
   redirect("/intake");
 }
+
+function publicationFailure(error: unknown, itemId: number): never {
+  const detail = error instanceof Error ? error.message : "";
+  const message = detail.includes("source changed") ? "Source changed; review the post and preview again."
+    : detail.includes("expired") ? "Preview expired; review the post and preview again."
+    : detail.includes("deleted") ? "Source post was deleted; review before publishing."
+    : "Publication action failed; check the local service and review again.";
+  redirect(`/telegram/publication/${itemId}?error=${encodeURIComponent(message)}`);
+}
+
+function publicationPayload(form: FormData) {
+  return {
+    headline_en: value(form, "headline_en"),
+    headline_ar: value(form, "headline_ar"),
+    source_identity_checked: form.get("source_identity_checked") === "on",
+    person_safety_checked: form.get("person_safety_checked") === "on",
+    operational_safety_checked: form.get("operational_safety_checked") === "on",
+    human_approved: form.get("human_approved") === "on",
+  };
+}
+
+export async function previewTelegramPublication(form: FormData) {
+  const itemId = positiveId(form, "item_id");
+  let preview: { draft_hash: string };
+  try {
+    preview = await api(`/intake-items/${itemId}/publication-preview`, "POST", publicationPayload(form));
+  } catch (error) { publicationFailure(error, itemId); }
+  redirect(`/telegram/publication/${itemId}?preview=${encodeURIComponent(preview.draft_hash)}`);
+}
+
+export async function approveTelegramPublication(form: FormData) {
+  const itemId = positiveId(form, "item_id");
+  try {
+    await api(`/intake-items/${itemId}/publication-approve`, "POST", {
+      ...publicationPayload(form), draft_hash: value(form, "draft_hash"),
+    });
+  } catch (error) { publicationFailure(error, itemId); }
+  redirect(`/telegram/publication/${itemId}?approved=1`);
+}
+
+export async function correctTelegramPublication(form: FormData) {
+  const itemId = positiveId(form, "item_id");
+  try {
+    await api(`/telegram-publications/${positiveId(form, "publication_id")}/correct`, "POST", {
+      ...publicationPayload(form), reason_en: value(form, "reason_en"), reason_ar: value(form, "reason_ar"),
+    });
+  } catch (error) { publicationFailure(error, itemId); }
+  redirect(`/telegram/publication/${itemId}?corrected=1`);
+}
+
+export async function withdrawTelegramPublication(form: FormData) {
+  const itemId = positiveId(form, "item_id");
+  try {
+    await api(`/telegram-publications/${positiveId(form, "publication_id")}/withdraw`, "POST", {
+      reason_en: value(form, "reason_en"), reason_ar: value(form, "reason_ar"),
+      human_approved: form.get("human_approved") === "on",
+    });
+  } catch (error) { publicationFailure(error, itemId); }
+  redirect(`/telegram/publication/${itemId}?withdrawn=1`);
+}

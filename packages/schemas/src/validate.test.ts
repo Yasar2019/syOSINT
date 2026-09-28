@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validatePublicDataset, validatePublicNewsWire } from "./validate";
+import { validatePublicDataset, validatePublicNewsWire, validatePublicTelegramWire } from "./validate";
 
 const valid = {
   schemaVersion: "1.0.0",
@@ -250,5 +250,77 @@ describe("validatePublicNewsWire", () => {
 
     expect(validatePublicNewsWire(missing).ok).toBe(false);
     expect(validatePublicNewsWire(unsafe).ok).toBe(false);
+  });
+});
+
+const approvedTelegram = {
+  schemaVersion: "1.0.0",
+  generatedAt: "2026-09-27T16:00:00Z",
+  lastEditorialUpdateAt: "2026-09-27T16:00:00Z",
+  entries: [{
+    id: "telegram:42:7",
+    status: "active",
+    channel: { name: "Example channel", username: "example", language: "mixed" },
+    url: "https://t.me/example/7",
+    headline: { en: "Analyst headline", ar: "عنوان المحلل" },
+    publishedAt: "2026-09-27T15:00:00Z",
+    approvedAt: "2026-09-27T16:00:00Z",
+    revisions: [],
+  }],
+};
+
+describe("validatePublicTelegramWire", () => {
+  it("accepts empty and individually approved bilingual wires", () => {
+    expect(validatePublicTelegramWire({ ...approvedTelegram, entries: [] }).ok).toBe(true);
+    expect(validatePublicTelegramWire(approvedTelegram)).toEqual({ ok: true, data: approvedTelegram });
+  });
+
+  it.each(["rawText", "mediaPath", "session", "phone", "privateNotes"])(
+    "rejects private %s", (field) => {
+      const input = structuredClone(approvedTelegram) as any;
+      input.entries[0][field] = "never public";
+      expect(validatePublicTelegramWire(input).ok).toBe(false);
+    },
+  );
+
+  it("rejects duplicates, foreign links, and channel identity mismatches", () => {
+    const duplicate = structuredClone(approvedTelegram);
+    duplicate.entries.push(structuredClone(duplicate.entries[0]));
+    expect(validatePublicTelegramWire(duplicate).ok).toBe(false);
+    for (const url of ["https://example.org/7", "http://t.me/example/7", "https://t.me/another/7", "https://t.me/example/7?secret=1", "https://t.me/example/8"]) {
+      const input = structuredClone(approvedTelegram);
+      input.entries[0].url = url;
+      expect(validatePublicTelegramWire(input).ok).toBe(false);
+    }
+  });
+
+  it("requires bilingual headlines with visible text", () => {
+    const input = structuredClone(approvedTelegram);
+    input.entries[0].headline.ar = "   ";
+    expect(validatePublicTelegramWire(input).ok).toBe(false);
+  });
+
+  it("preserves correction and withdrawal history in time order", () => {
+    const input = structuredClone(approvedTelegram) as any;
+    input.entries[0].status = "corrected";
+    input.entries[0].revisions = [{
+      action: "corrected", revisedAt: "2026-09-27T17:00:00Z",
+      reason: { en: "Corrected attribution", ar: "تصحيح النسبة" },
+      previousHeadline: { en: "Earlier headline", ar: "عنوان سابق" },
+    }];
+    expect(validatePublicTelegramWire(input).ok).toBe(true);
+    delete input.entries[0].revisions[0].previousHeadline;
+    expect(validatePublicTelegramWire(input).ok).toBe(false);
+    input.entries[0].revisions[0].previousHeadline = { en: "Earlier headline", ar: "عنوان سابق" };
+    input.entries[0].status = "withdrawn";
+    input.entries[0].revisions.push({
+      action: "withdrawn", revisedAt: "2026-09-27T18:00:00Z",
+      reason: { en: "Source withdrew", ar: "سحب المصدر" },
+    });
+    expect(validatePublicTelegramWire(input).ok).toBe(true);
+    input.entries[0].revisions[1].revisedAt = "2026-09-27T16:00:00Z";
+    expect(validatePublicTelegramWire(input).ok).toBe(false);
+    input.entries[0].revisions[1].previousHeadline = { en: "Leaked", ar: "مسرب" };
+    expect(validatePublicTelegramWire(input).ok).toBe(false);
   });
 });

@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://syosint.org/schemas/public-telegram-wire/1.0.0",
+  "title": "syOSINT human-approved public Telegram wire",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "lastEditorialUpdateAt",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lastEditorialUpdateAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "localizedText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "en",
+        "ar"
+      ],
+      "properties": {
+        "en": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "ar": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revisedAt",
+        "action",
+        "reason"
+      ],
+      "properties": {
+        "revisedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "action": {
+          "enum": [
+            "corrected",
+            "withdrawn"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "previousHeadline": {
+          "$ref": "#/$defs/localizedText"
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "channel",
+        "url",
+        "headline",
+        "publishedAt",
+        "approvedAt",
+        "revisions"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^telegram:[A-Za-z0-9_]+:[1-9][0-9]*$"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "corrected",
+            "withdrawn"
+          ]
+        },
+        "channel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "username",
+            "language"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "username": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]{4,31}$"
+            },
+            "language": {
+              "enum": [
+                "en",
+                "ar",
+                "mixed"
+              ]
+            }
+          }
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://t\\.me/[A-Za-z][A-Za-z0-9_]{4,31}/[1-9][0-9]*$"
+        },
+        "headline": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revisions": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/revision"
+          }
+        }
+      }
+    }
+  }
+}

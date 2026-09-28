@@ -52,7 +52,7 @@ jobs:
         run: >-
           pnpm collect:rss:public --previous-url
           https://yasar2019.github.io/syOSINT/news-wire.v1.json
-      - name: Validate with validatePublicNewsWire contract
+      - name: Validate refreshed RSS and tracked Telegram public wires
         run: |
           node apps/public-dashboard/scripts/sync-public-data.mjs
           pnpm --filter @syosint/schemas test

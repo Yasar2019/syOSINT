@@ -17,6 +17,20 @@ export interface Dictionary {
     title: string;
     body: string;
   };
+  telegramWire: {
+    reportingMode: string;
+    dateFilter: string;
+    modes: { all: string; rss: string; telegram: string };
+    title: string;
+    disclosure: string;
+    updated: string;
+    window: string;
+    empty: string;
+    withdrawn: string;
+    history: string;
+    previous: string;
+    status: { active: string; corrected: string; withdrawn: string };
+  };
   newsWire: {
     title: string;
     disclosure: string;

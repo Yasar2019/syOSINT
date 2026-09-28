@@ -10,6 +10,9 @@ export type {
   PublicNewsWireEntry,
   PublicNewsWireSourceState,
   PublicSourceReference,
+  PublicTelegramEntry,
+  PublicTelegramRevision,
+  PublicTelegramWire,
 } from "./types";
-export { validatePublicDataset, validatePublicNewsWire } from "./validate";
-export type { NewsWireValidationResult, ValidationResult } from "./validate";
+export { validatePublicDataset, validatePublicNewsWire, validatePublicTelegramWire } from "./validate";
+export type { NewsWireValidationResult, TelegramWireValidationResult, ValidationResult } from "./validate";
