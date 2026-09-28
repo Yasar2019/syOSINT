@@ -114,3 +114,34 @@ def test_preview_expiration_requires_fresh_review(db):
     session.commit()
     with pytest.raises(PublicationConflict, match="expired"):
         approve_publication(session, draft.draft_hash, approval_payload())
+
+
+def test_correction_and_withdrawal_append_explicit_history(db):
+    from syosint.models import TelegramPublicationRevision
+    from syosint.telegram_publication import correct_publication, withdraw_publication, publication_attention
+    session, item_id, _ = db
+    draft = build_publication_preview(session, item_id, approval_payload())
+    publication = approve_publication(session, draft.draft_hash, approval_payload())
+    item = session.get(IntakeItem, item_id)
+    item.raw_digest = "c" * 64
+    session.commit()
+    assert publication_attention(session) == [
+        {"id": publication.id, "public_id": "telegram:42:7", "reason": "source-edited"}
+    ]
+    corrected = correct_publication(
+        session, publication.id, approval_payload(headline_en="Corrected analyst headline"),
+        "Corrected attribution", "تصحيح النسبة")
+    assert corrected.status == "corrected"
+    assert corrected.record["revisions"][0]["previousHeadline"]["en"] == "Human-written update"
+    assert publication_attention(session) == []
+    item.deleted_at = now()
+    session.commit()
+    assert publication_attention(session)[0]["reason"] == "source-deleted"
+    with pytest.raises(PublicationConflict, match="explicit"):
+        withdraw_publication(session, publication.id, "Source withdrew", "سحب المصدر", False)
+    withdrawn = withdraw_publication(session, publication.id, "Source withdrew", "سحب المصدر", True)
+    assert withdrawn.status == "withdrawn"
+    assert withdrawn.record["revisions"][-1]["action"] == "withdrawn"
+    assert len(withdrawn.record["revisions"]) == 2
+    assert publication_attention(session) == []
+    assert session.query(TelegramPublicationRevision).count() == 2

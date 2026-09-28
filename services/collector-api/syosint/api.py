@@ -25,6 +25,8 @@ from .models import (
     Incident,
     Source,
     TelegramCursor,
+    TelegramPublication,
+    TelegramPublicationPreview,
     now,
 )
 from .rss_scheduler import RssScheduler, default_collector
@@ -32,6 +34,12 @@ from .rss_store import store_collection
 from .safe_http import HttpValidators
 from .telegram_collect import ChannelPolicyError, resolve_public_channel, sync_channel
 from .telegram_session import TelegramSettings, safe_auth_state
+from .telegram_publication import (
+    PublicationConflict, PublicationPayload, approve_publication,
+    build_publication_preview, correct_publication, withdraw_publication,
+    publication_attention,
+)
+from .telegram_export import PublicSchemaError, write_pending_telegram_export
 from .telegram_scheduler import TelegramScheduler
 
 
@@ -102,6 +110,31 @@ class TelegramChannelInput(TelegramResolveInput):
 
 class TelegramMediaPolicyInput(Strict):
     enabled: bool
+
+
+
+class PublicationPreviewInput(Strict):
+    headline_en: str = Field(min_length=3, max_length=240)
+    headline_ar: str = Field(min_length=3, max_length=240)
+    source_identity_checked: bool
+    person_safety_checked: bool
+    operational_safety_checked: bool
+    human_approved: bool
+
+
+class PublicationApprovalInput(PublicationPreviewInput):
+    draft_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class PublicationCorrectionInput(PublicationPreviewInput):
+    reason_en: str = Field(min_length=3, max_length=240)
+    reason_ar: str = Field(min_length=3, max_length=240)
+
+
+class PublicationWithdrawalInput(Strict):
+    reason_en: str = Field(min_length=3, max_length=240)
+    reason_ar: str = Field(min_length=3, max_length=240)
+    human_approved: bool
 
 
 class IncidentInput(Strict):
@@ -364,6 +397,68 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
             raise HTTPException(503, "Telegram temporarily unavailable") from None
         finally:
             await close_telegram(transport)
+
+
+    def pending_telegram_export(db: Session):
+        records = [publication.record for publication in db.scalars(
+            select(TelegramPublication).order_by(TelegramPublication.id))]
+        try:
+            write_pending_telegram_export(app.state.export_dir, records, now())
+        except (OSError, ValueError, PublicSchemaError):
+            raise HTTPException(503, "Pending editorial export unavailable") from None
+
+    @app.post("/intake-items/{item_id}/publication-preview")
+    def preview_telegram_publication(item_id: int, item: PublicationPreviewInput,
+                                     db: Session = Depends(session)):
+        try:
+            draft = build_publication_preview(
+                db, item_id, PublicationPayload(**item.model_dump()))
+        except PublicationConflict as error:
+            raise HTTPException(409, str(error)) from None
+        return {"draft_hash": draft.draft_hash, "record": draft.record}
+
+    @app.post("/intake-items/{item_id}/publication-approve")
+    def approve_telegram_publication(item_id: int, item: PublicationApprovalInput,
+                                     db: Session = Depends(session)):
+        draft = db.scalar(select(TelegramPublicationPreview).where(
+            TelegramPublicationPreview.draft_hash == item.draft_hash))
+        if draft is None or draft.item_id != item_id:
+            raise HTTPException(409, "Preview belongs to a different item")
+        try:
+            publication = approve_publication(
+                db, item.draft_hash, PublicationPayload(**item.model_dump(exclude={"draft_hash"})))
+        except PublicationConflict as error:
+            raise HTTPException(409, str(error)) from None
+        pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.post("/telegram-publications/{publication_id}/correct")
+    def correct_telegram_publication(publication_id: int, item: PublicationCorrectionInput,
+                                     db: Session = Depends(session)):
+        try:
+            publication = correct_publication(
+                db, publication_id,
+                PublicationPayload(**item.model_dump(exclude={"reason_en", "reason_ar"})),
+                item.reason_en, item.reason_ar)
+        except PublicationConflict as error:
+            raise HTTPException(409, str(error)) from None
+        pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.post("/telegram-publications/{publication_id}/withdraw")
+    def withdraw_telegram_publication(publication_id: int, item: PublicationWithdrawalInput,
+                                      db: Session = Depends(session)):
+        try:
+            publication = withdraw_publication(
+                db, publication_id, item.reason_en, item.reason_ar, item.human_approved)
+        except PublicationConflict as error:
+            raise HTTPException(409, str(error)) from None
+        pending_telegram_export(db)
+        return {"id": publication.id, "public_id": publication.public_id, "status": publication.status}
+
+    @app.get("/telegram-publications/attention")
+    def list_telegram_publication_attention(db: Session = Depends(session)):
+        return publication_attention(db)
 
     @app.middleware("http")
     async def enforce_local_origin(request, call_next):
