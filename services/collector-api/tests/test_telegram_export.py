@@ -44,6 +44,19 @@ def test_pending_sanitizes_and_staging_is_idempotent(tmp_path):
     assert entries[0]["id"] == "telegram:42:7"
 
 
+def test_pending_prunes_expired_approvals_before_the_500_entry_limit(tmp_path):
+    historical = []
+    for index in range(1, 502):
+        record = lead(published=NOW - timedelta(days=8))
+        record["id"] = f"telegram:42:{index}"
+        record["url"] = f"https://t.me/publicnews/{index}"
+        historical.append(record)
+    recent = lead()
+    pending = write_pending_telegram_export(tmp_path / "private", historical + [recent], NOW)
+    data = json.loads(pending.read_text())
+    assert [record["id"] for record in data["entries"]] == [recent["id"]]
+
+
 def test_stage_fails_closed_on_private_field_and_preserves_existing_data(tmp_path):
     original = [lead()]
     current = write(tmp_path / "public.json", original)

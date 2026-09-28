@@ -19,6 +19,7 @@ export interface Dictionary {
   };
   telegramWire: {
     reportingMode: string;
+    dateFilter: string;
     modes: { all: string; rss: string; telegram: string };
     title: string;
     disclosure: string;

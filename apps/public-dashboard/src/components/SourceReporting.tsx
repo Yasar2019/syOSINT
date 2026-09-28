@@ -7,11 +7,13 @@ import type { Dictionary, Locale } from "../i18n/types";
 const PAGE_SIZE = 25;
 type ReportingMode = "all" | "rss" | "telegram";
 
-export function SourceReporting({ wire, locale, dictionary, onModeChange }: {
+export function SourceReporting({ wire, locale, dictionary, onModeChange, hideTabs = false, hideFilters = false }: {
   wire: PublicTelegramWire;
   locale: Locale;
   dictionary: Dictionary;
   onModeChange?: (mode: ReportingMode) => void;
+  hideTabs?: boolean;
+  hideFilters?: boolean;
 }) {
   const [mode, setMode] = useState<ReportingMode>("all");
   const [source, setSource] = useState("");
@@ -26,15 +28,15 @@ export function SourceReporting({ wire, locale, dictionary, onModeChange }: {
 
   return (
     <section className="news-wire telegram-wire" aria-labelledby="telegram-wire-title">
-      <div role="tablist" aria-label={labels.reportingMode} className="reporting-tabs">
+      {!hideTabs && <div role="tablist" aria-label={labels.reportingMode} className="reporting-tabs">
         {(["all", "rss", "telegram"] as const).map((value) => (
           <button key={value} type="button" role="tab" aria-selected={mode === value} onClick={() => {
             setMode(value);
             onModeChange?.(value);
           }}>{labels.modes[value]}</button>
         ))}
-      </div>
-      {mode !== "rss" && (mode === "telegram" || wire.entries.length > 0) && <div role="tabpanel" aria-label={labels.modes.telegram}>
+      </div>}
+      {(hideTabs || mode !== "rss" && (mode === "telegram" || wire.entries.length > 0)) && <div role="tabpanel" aria-label={labels.modes.telegram}>
         <div className="news-wire-heading">
           <div>
             <p className="eyebrow">TELEGRAM</p>
@@ -46,7 +48,7 @@ export function SourceReporting({ wire, locale, dictionary, onModeChange }: {
           </time></div>
         </div>
         <p className="wire-coverage">{labels.window}</p>
-        <div className="wire-filters">
+        {!hideFilters && <div className="wire-filters">
           <label>{labels.title} · {dictionary.newsWire.sourceFilter}<select value={source} onChange={(event) => { setSource(event.target.value); setCount(PAGE_SIZE); }}>
             <option value="">{dictionary.newsWire.allSources}</option>
             {sources.map((name) => <option value={name} key={name}>{name}</option>)}
@@ -56,7 +58,7 @@ export function SourceReporting({ wire, locale, dictionary, onModeChange }: {
             <option value="en">{dictionary.newsWire.english}</option>
             <option value="ar">{dictionary.newsWire.arabic}</option>
           </select></label>
-        </div>
+        </div>}
         {entries.length === 0 ? <p className="wire-empty">{labels.empty}</p> : <ol className="wire-list">
           {entries.slice(0, count).map((entry) => <li key={entry.id}><article>
             <div className="wire-meta"><span>{entry.channel.name}</span><time dateTime={entry.publishedAt}>

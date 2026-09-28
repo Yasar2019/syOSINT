@@ -235,6 +235,28 @@ h3 {
   margin-block-end: 20px;
 }
 
+.reporting-controls {
+  margin-block-end: 18px;
+  padding: 12px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--navy-850);
+}
+
+.reporting-controls .wire-filters {
+  margin-block: 10px 0;
+}
+
+.reporting-controls input[type="date"] {
+  min-block-size: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--navy-950);
+  color: var(--ink);
+  padding-inline: 10px;
+  color-scheme: dark;
+}
+
 .reporting-tabs button {
   padding-inline: 14px;
   font-weight: 700;

@@ -105,6 +105,15 @@ def test_all_checks_and_human_headlines_are_required(db):
             build_publication_preview(session, item_id, payload)
 
 
+def test_expired_source_post_cannot_be_approved_into_an_invisible_public_wire(db):
+    session, item_id, _ = db
+    item = session.get(IntakeItem, item_id)
+    item.published_at = now() - timedelta(days=8)
+    session.commit()
+    with pytest.raises(PublicationConflict, match="seven-day publication window"):
+        build_publication_preview(session, item_id, approval_payload())
+
+
 def test_preview_expiration_requires_fresh_review(db):
     session, item_id, _ = db
     draft = build_publication_preview(session, item_id, approval_payload())

@@ -17,6 +17,7 @@ export const en = {
   },
   telegramWire: {
     reportingMode: "Reporting view",
+    dateFilter: "Since date",
     modes: { all: "All reporting", rss: "RSS / Atom", telegram: "Approved Telegram" },
     title: "Approved Telegram reports",
     disclosure: "Reviewed external Telegram report — not independently verified",

@@ -17,6 +17,7 @@ export const ar = {
   },
   telegramWire: {
     reportingMode: "عرض التقارير",
+    dateFilter: "منذ تاريخ",
     modes: { all: "كل التقارير", rss: "آر إس إس / أتوم", telegram: "تيليغرام الموافق عليه" },
     title: "تقارير تيليغرام الموافق عليها",
     disclosure: "تقرير خارجي من تيليغرام راجعه محرر — لم يتم التحقق منه بشكل مستقل",

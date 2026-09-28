@@ -81,6 +81,8 @@ def _sanitized_record(db: Session, item_id: int, payload: PublicationPayload,
         raise PublicationConflict("source identity or source digest invalid")
     if _utc(item.published_at) > _utc(at):
         raise PublicationConflict("source publication time is invalid")
+    if _utc(item.published_at) < _utc(at) - timedelta(days=7):
+        raise PublicationConflict("source post is outside the seven-day publication window")
     sanitized = {
         "id": f"telegram:{cursor.channel_id}:{native_id}",
         "status": "active",
@@ -104,6 +106,12 @@ def build_publication_preview(db: Session, item_id: int, payload: PublicationPay
     checked_at = _utc(at or current_time())
     if checked_at > _utc(current_time()) + timedelta(minutes=1):
         raise PublicationConflict("invalid review time")
+    if db.scalar(select(TelegramPublication).where(TelegramPublication.item_id == item_id)) is None:
+        live = sum(_utc(datetime.fromisoformat(publication.record["publishedAt"].replace(
+            "Z", "+00:00"))) >= checked_at - timedelta(days=7) for publication in db.scalars(
+                select(TelegramPublication)))
+        if live >= 500:
+            raise PublicationConflict("public Telegram wire capacity reached; review expired records")
     sanitized, source_digest = _sanitized_record(db, item_id, payload, checked_at)
     draft_hash = _draft_hash(item_id, sanitized, source_digest)
     safety = {
@@ -132,6 +140,9 @@ def approve_publication(db: Session, draft_hash: str, payload: PublicationPayloa
         TelegramPublicationPreview.draft_hash == draft_hash))
     if draft is None or _utc(draft.expires_at) < _utc(at or current_time()):
         raise PublicationConflict("preview expired; review again")
+    if _utc(datetime.fromisoformat(draft.record["publishedAt"].replace(
+        "Z", "+00:00"))) < _utc(at or current_time()) - timedelta(days=7):
+        raise PublicationConflict("source post is outside the seven-day publication window")
     checked_at = _utc(datetime.fromisoformat(draft.record["approvedAt"].replace("Z", "+00:00")))
     current_record, current_digest = _sanitized_record(db, draft.item_id, payload, checked_at)
     if (draft.source_digest != current_digest or draft.record != current_record

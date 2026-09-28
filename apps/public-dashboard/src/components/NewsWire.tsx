@@ -11,10 +11,12 @@ export function NewsWire({
   wire,
   locale,
   dictionary,
+  hideFilters = false,
 }: {
   wire: PublicNewsWire;
   locale: Locale;
   dictionary: Dictionary;
+  hideFilters?: boolean;
 }) {
   const [sourceId, setSourceId] = useState("");
   const [language, setLanguage] = useState<"" | "en" | "ar">("");
@@ -97,7 +99,7 @@ export function NewsWire({
           : dictionary.newsWire.headlines}
       </p>
 
-      <div className="wire-filters">
+      {!hideFilters && <div className="wire-filters">
         <label>
           {dictionary.newsWire.sourceFilter}
           <select
@@ -134,7 +136,7 @@ export function NewsWire({
             <option value="ar">{dictionary.newsWire.arabic}</option>
           </select>
         </label>
-      </div>
+      </div>}
 
       {entries.length === 0 ? (
         <div className="wire-empty">

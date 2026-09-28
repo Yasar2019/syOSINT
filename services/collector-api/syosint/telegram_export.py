@@ -96,10 +96,16 @@ def _atomic_write(path: Path, value: dict, *, private: bool) -> Path:
 
 def write_pending_telegram_export(directory: Path, records: list[dict],
                                   at: datetime | None = None) -> Path:
-    stamp = _stamp(at or datetime.now(UTC))
+    checked_at = _utc(at or datetime.now(UTC))
+    cutoff = checked_at - timedelta(days=7)
+    # SQLite retains the full editorial audit; only live-window records enter
+    # the bounded artifact. Historic approvals must never block withdrawals.
+    recent = [record for record in records if _utc(datetime.fromisoformat(
+        record["publishedAt"].replace("Z", "+00:00"))) >= cutoff]
+    stamp = _stamp(checked_at)
     value = validate_public_telegram_wire({
         "schemaVersion": "1.0.0", "generatedAt": stamp,
-        "lastEditorialUpdateAt": stamp, "entries": records,
+        "lastEditorialUpdateAt": stamp, "entries": recent,
     })
     return _atomic_write(directory / "telegram-pending.v1.json", value, private=True)
 
