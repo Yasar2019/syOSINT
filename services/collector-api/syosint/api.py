@@ -402,10 +402,21 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     def pending_telegram_export(db: Session):
         records = [publication.record for publication in db.scalars(
             select(TelegramPublication).order_by(TelegramPublication.id))]
+        pending_path = app.state.export_dir / "telegram-pending.v1.json"
         try:
+            # If rewriting fails, an old artifact must not be stageable after
+            # a committed correction or withdrawal.
+            if pending_path.parent.is_symlink():
+                raise PublicSchemaError("unsafe pending export directory")
+            pending_path.unlink(missing_ok=True)
             write_pending_telegram_export(app.state.export_dir, records, now())
         except (OSError, ValueError, PublicSchemaError):
             raise HTTPException(503, "Pending editorial export unavailable") from None
+
+    @app.post("/telegram-publications/export-pending")
+    def rebuild_pending_telegram_export(db: Session = Depends(session)):
+        pending_telegram_export(db)
+        return {"status": "pending-export-ready"}
 
     @app.get("/telegram-publication-previews/{draft_hash}")
     def get_telegram_publication_preview(draft_hash: str, db: Session = Depends(session)):

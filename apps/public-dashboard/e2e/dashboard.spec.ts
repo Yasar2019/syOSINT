@@ -17,7 +17,7 @@ test("switches public reporting modes and explains pending Telegram approvals in
 test("filters incidents and preserves filters when switching to Arabic", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Live News Wire" })).toBeVisible();
-  await expect(page.getByText("Unverified external reporting")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Live News Wire" }).locator(".wire-disclosure")).toHaveText("Unverified external reporting");
   await expect(page.getByText(/\d+ configured · \d+ healthy · \d+ delayed · \d+ headlines?/)).toBeVisible();
   await expect(page.getByText(/reviewed incidents are fictional demonstration data/i)).toBeVisible();
   await expect(page.getByText(/Live News Wire contains real, unverified external publisher headlines/i)).toBeVisible();

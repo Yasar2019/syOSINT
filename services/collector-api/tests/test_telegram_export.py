@@ -57,6 +57,28 @@ def test_pending_prunes_expired_approvals_before_the_500_entry_limit(tmp_path):
     assert [record["id"] for record in data["entries"]] == [recent["id"]]
 
 
+def test_staging_accepts_valid_correction_history_larger_than_old_2mb_cap(tmp_path):
+    records = []
+    for index in range(1, 41):
+        record = lead(published=NOW - timedelta(days=3))
+        record["id"] = f"telegram:42:{index}"
+        record["url"] = f"https://t.me/publicnews/{index}"
+        record["approvedAt"] = (NOW - timedelta(days=2)).isoformat().replace("+00:00", "Z")
+        record["status"] = "corrected"
+        record["revisions"] = [{
+            "action": "corrected",
+            "revisedAt": (NOW - timedelta(days=2) + timedelta(minutes=revision + 1)).isoformat().replace("+00:00", "Z"),
+            "reason": {"en": "E" * 180, "ar": "ع" * 180},
+            "previousHeadline": {"en": "P" * 180, "ar": "س" * 180},
+        } for revision in range(100)]
+        records.append(record)
+    pending = write_pending_telegram_export(tmp_path / "private", records, NOW)
+    assert pending.stat().st_size > 2_000_000
+    current = write(tmp_path / "public.json", [])
+    stage_telegram_wire(pending, current, current, NOW)
+    assert len(json.loads(current.read_text())["entries"]) == 40
+
+
 def test_stage_fails_closed_on_private_field_and_preserves_existing_data(tmp_path):
     original = [lead()]
     current = write(tmp_path / "public.json", original)

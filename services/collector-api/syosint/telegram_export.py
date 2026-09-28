@@ -66,7 +66,7 @@ def validate_public_telegram_wire(value: object) -> dict:
 
 
 def _read(path: Path) -> dict:
-    if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 256_000_000:
         raise PublicSchemaError("public Telegram artifact unavailable")
     try:
         return validate_public_telegram_wire(json.loads(path.read_text(encoding="utf-8")))

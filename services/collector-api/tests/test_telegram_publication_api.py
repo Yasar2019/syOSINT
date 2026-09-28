@@ -89,6 +89,34 @@ def test_preview_approve_and_manual_stage_require_individual_consent(local):
     assert json.loads(tracked.read_text())["entries"][0]["id"] == "telegram:42:7"
 
 
+def test_failed_export_clears_stale_pending_file_and_can_be_rebuilt(local, monkeypatch):
+    import syosint.api as api_module
+    client, app, item_id, root = local
+    path = f"/intake-items/{item_id}"
+    draft = client.post(f"{path}/publication-preview", json=payload()).json()
+    pub = client.post(f"{path}/publication-approve", json={
+        **payload(), "draft_hash": draft["draft_hash"],
+    }).json()
+    pending = root / "pending-exports/telegram-pending.v1.json"
+    assert pending.exists()
+    writer = api_module.write_pending_telegram_export
+
+    def failed_writer(*args, **kwargs):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(api_module, "write_pending_telegram_export", failed_writer)
+    result = client.post(f"/telegram-publications/{pub['id']}/withdraw", json={
+        "reason_en": "Source withdrew claim", "reason_ar": "سحب المصدر الخبر",
+        "human_approved": True,
+    })
+    assert result.status_code == 503
+    assert not pending.exists()
+    monkeypatch.setattr(api_module, "write_pending_telegram_export", writer)
+    assert client.post("/telegram-publications/export-pending").status_code == 200
+    exported = json.loads(pending.read_text())
+    assert exported["entries"][0]["status"] == "withdrawn"
+
+
 def test_source_edit_and_deletion_require_explicit_correction_and_withdrawal(local):
     client, app, item_id, root = local
     path = f"/intake-items/{item_id}"

@@ -21,6 +21,7 @@ from .models import (
 USERNAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]{4,31}$")
 HASH = re.compile(r"^[0-9a-f]{64}$")
 PREVIEW_LIFETIME = timedelta(minutes=15)
+MAX_PUBLIC_TELEGRAM_ENTRIES = 500
 
 
 class PublicationConflict(ValueError):
@@ -101,17 +102,22 @@ def _draft_hash(item_id: int, sanitized: dict, source_digest: str) -> str:
     return sha256(json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
 
 
+def _check_public_capacity(db: Session, item_id: int, checked_at: datetime) -> None:
+    if db.scalar(select(TelegramPublication).where(TelegramPublication.item_id == item_id)) is not None:
+        return
+    live = sum(_utc(datetime.fromisoformat(publication.record["publishedAt"].replace(
+        "Z", "+00:00"))) >= checked_at - timedelta(days=7) for publication in db.scalars(
+            select(TelegramPublication)))
+    if live >= MAX_PUBLIC_TELEGRAM_ENTRIES:
+        raise PublicationConflict("public Telegram wire capacity reached; review expired records")
+
+
 def build_publication_preview(db: Session, item_id: int, payload: PublicationPayload,
                               at: datetime | None = None) -> PublicationDraft:
     checked_at = _utc(at or current_time())
     if checked_at > _utc(current_time()) + timedelta(minutes=1):
         raise PublicationConflict("invalid review time")
-    if db.scalar(select(TelegramPublication).where(TelegramPublication.item_id == item_id)) is None:
-        live = sum(_utc(datetime.fromisoformat(publication.record["publishedAt"].replace(
-            "Z", "+00:00"))) >= checked_at - timedelta(days=7) for publication in db.scalars(
-                select(TelegramPublication)))
-        if live >= 500:
-            raise PublicationConflict("public Telegram wire capacity reached; review expired records")
+    _check_public_capacity(db, item_id, checked_at)
     sanitized, source_digest = _sanitized_record(db, item_id, payload, checked_at)
     draft_hash = _draft_hash(item_id, sanitized, source_digest)
     safety = {
@@ -154,6 +160,7 @@ def approve_publication(db: Session, draft_hash: str, payload: PublicationPayloa
         if prior.record == current_record and prior.source_digest == current_digest:
             return prior
         raise PublicationConflict("post is already approved; use editorial correction")
+    _check_public_capacity(db, draft.item_id, _utc(at or current_time()))
     published = TelegramPublication(
         item_id=draft.item_id, public_id=current_record["id"],
         source_digest=current_digest, record=current_record, status="active",

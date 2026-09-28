@@ -114,6 +114,26 @@ def test_expired_source_post_cannot_be_approved_into_an_invisible_public_wire(db
         build_publication_preview(session, item_id, approval_payload())
 
 
+def test_approval_rechecks_capacity_after_two_previews_compete_for_one_slot(db, monkeypatch):
+    import syosint.telegram_publication as publication_service
+    monkeypatch.setattr(publication_service, "MAX_PUBLIC_TELEGRAM_ENTRIES", 1)
+    session, item_id, source_id = db
+    second = IntakeItem(
+        source_id=source_id, platform="telegram", fingerprint="c" * 64,
+        native_id="8", headline=None, url="https://t.me/publicnews/8",
+        text="OTHER PRIVATE POST", published_at=now() - timedelta(hours=1),
+        collected_at=now(), raw_digest="d" * 64, status="new",
+    )
+    session.add(second)
+    session.commit()
+    first_preview = build_publication_preview(session, item_id, approval_payload())
+    second_preview = build_publication_preview(session, second.id, approval_payload())
+    approve_publication(session, first_preview.draft_hash, approval_payload())
+    with pytest.raises(PublicationConflict, match="capacity"):
+        approve_publication(session, second_preview.draft_hash, approval_payload())
+    assert session.query(TelegramPublication).count() == 1
+
+
 def test_preview_expiration_requires_fresh_review(db):
     session, item_id, _ = db
     draft = build_publication_preview(session, item_id, approval_payload())
