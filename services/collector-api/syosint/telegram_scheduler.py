@@ -59,8 +59,11 @@ class TelethonReadTransport:
         if not native_ids:
             return ()
         found = await self._client._client.get_messages(self._entity, ids=[int(value) for value in native_ids])
-        return tuple(TelegramMessage(item.id, item.raw_text or "", item.date, item.edit_date)
-                     for item in found if item is not None and item.date)
+        return tuple(TelegramMessage(
+            item.id, item.raw_text or "", item.date, item.edit_date,
+            item.file.mime_type if item.file else None,
+            item.file.size if item.file else None,
+        ) for item in found if item is not None and item.date)
 
     async def iter_media_chunks(self, channel_id: int, message_id: int):
         if self._entity is None or self._entity.id != channel_id:

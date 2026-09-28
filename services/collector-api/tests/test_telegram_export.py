@@ -44,6 +44,23 @@ def test_pending_sanitizes_and_staging_is_idempotent(tmp_path):
     assert entries[0]["id"] == "telegram:42:7"
 
 
+def test_rebuilding_pending_file_does_not_claim_a_new_editorial_update(tmp_path):
+    approved = lead()
+    first = write_pending_telegram_export(tmp_path / "private", [approved], NOW)
+    initial = json.loads(first.read_text())
+    rebuilt = write_pending_telegram_export(tmp_path / "private", [approved], NOW + timedelta(hours=2))
+    refreshed = json.loads(rebuilt.read_text())
+    assert refreshed["generatedAt"] != initial["generatedAt"]
+    assert refreshed["lastEditorialUpdateAt"] == initial["lastEditorialUpdateAt"] == approved["approvedAt"]
+    correction = {**approved, "status": "corrected", "revisions": [{
+        "action": "corrected", "revisedAt": "2026-09-27T18:00:00Z",
+        "reason": {"en": "Source clarification", "ar": "توضيح المصدر"},
+        "previousHeadline": approved["headline"],
+    }]}
+    corrected = write_pending_telegram_export(tmp_path / "private", [correction], NOW + timedelta(hours=2))
+    assert json.loads(corrected.read_text())["lastEditorialUpdateAt"] == "2026-09-27T18:00:00Z"
+
+
 def test_pending_prunes_expired_approvals_before_the_500_entry_limit(tmp_path):
     historical = []
     for index in range(1, 502):

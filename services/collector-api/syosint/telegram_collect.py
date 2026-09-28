@@ -1,5 +1,6 @@
 """Bounded, read-only local Telegram intake. Never projects public records."""
 
+import json
 import re
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
@@ -64,7 +65,14 @@ def _normalized(source: Source, post: TelegramMessage, now: datetime) -> Normali
         text=post.text, published_at=post.published_at.astimezone(UTC),
         edited_at=post.edited_at.astimezone(UTC) if post.edited_at else None,
         collected_at=now, fingerprint=sha256(f"{source.id}\0{native_id}".encode()).hexdigest(),
-        raw_digest=sha256(post.text.encode()).hexdigest(),
+        # A source edit can leave its caption unchanged while updating media or
+        # the edit timestamp. Any such change invalidates an earlier review.
+        raw_digest=sha256(json.dumps({
+            "text": post.text,
+            "edited_at": post.edited_at.astimezone(UTC).isoformat() if post.edited_at else None,
+            "media_mime_type": post.media_mime_type,
+            "media_size": post.media_size,
+        }, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
     )
 
 

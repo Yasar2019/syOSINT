@@ -103,9 +103,13 @@ def write_pending_telegram_export(directory: Path, records: list[dict],
     recent = [record for record in records if _utc(datetime.fromisoformat(
         record["publishedAt"].replace("Z", "+00:00"))) >= cutoff]
     stamp = _stamp(checked_at)
+    editorial_update = max((
+        record["revisions"][-1]["revisedAt"] if record["revisions"] else record["approvedAt"]
+        for record in records
+    ), default="1970-01-01T00:00:00Z")
     value = validate_public_telegram_wire({
         "schemaVersion": "1.0.0", "generatedAt": stamp,
-        "lastEditorialUpdateAt": stamp, "entries": recent,
+        "lastEditorialUpdateAt": editorial_update, "entries": recent,
     })
     return _atomic_write(directory / "telegram-pending.v1.json", value, private=True)
 

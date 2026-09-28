@@ -92,7 +92,7 @@ export function ReportingHub({ newsWire, telegramWire, locale, dictionary }: {
       </div><div className="wire-refresh">
         <span>{dictionary.newsWire.refreshed}</span><time dateTime={newsWire.lastSuccessfulRefreshAt}>{date(newsWire.lastSuccessfulRefreshAt)}</time>
         {newsWire.sources.delayed > 0 && <span role="status" className="wire-delayed">{newsWire.sources.delayed} {dictionary.newsWire.delayed}</span>}
-        <span>{labels.updated}</span><time dateTime={telegramWire.lastEditorialUpdateAt}>{date(telegramWire.lastEditorialUpdateAt)}</time>
+        {telegramWire.entries.length > 0 && <><span>{labels.updated}</span><time dateTime={telegramWire.lastEditorialUpdateAt}>{date(telegramWire.lastEditorialUpdateAt)}</time></>}
       </div></div>
       <p className="wire-coverage">{newsWire.sources.configured} {dictionary.newsWire.configured} · {newsWire.sources.healthy} {dictionary.newsWire.healthy} · {newsWire.sources.delayed} {dictionary.newsWire.delayedCount} · {newsWire.entries.length} {newsWire.entries.length === 1 ? dictionary.newsWire.headline : dictionary.newsWire.headlines}</p>
       {combined.length === 0 ? <p className="wire-empty">{dictionary.newsWire.empty}</p> : <ol className="wire-list">

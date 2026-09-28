@@ -43,9 +43,9 @@ export function SourceReporting({ wire, locale, dictionary, onModeChange, hideTa
             <h2 id="telegram-wire-title">{labels.title}</h2>
             <strong className="wire-disclosure">{labels.disclosure}</strong>
           </div>
-          <div className="wire-refresh"><span>{labels.updated}</span><time dateTime={wire.lastEditorialUpdateAt}>
+          {wire.entries.length > 0 && <div className="wire-refresh"><span>{labels.updated}</span><time dateTime={wire.lastEditorialUpdateAt}>
             {new Date(wire.lastEditorialUpdateAt).toLocaleString(locale === "ar" ? "ar-SY" : "en-GB", { timeZone: "UTC" })} UTC
-          </time></div>
+          </time></div>}
         </div>
         <p className="wire-coverage">{labels.window}</p>
         {!hideFilters && <div className="wire-filters">

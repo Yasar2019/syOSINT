@@ -15,6 +15,13 @@ const telegram: PublicTelegramWire = {
 };
 
 describe("ReportingHub", () => {
+  it("does not describe an empty demonstration wire as a recent editorial update", () => {
+    render(<ReportingHub newsWire={rss} telegramWire={{ ...telegram, entries: [] }} locale="en" dictionary={en} />);
+    expect(screen.queryByText("Last editorial update")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Approved Telegram" }));
+    expect(screen.getByText("No approved Telegram reports are available in the past seven days.")).toBeVisible();
+    expect(screen.queryByText("Last editorial update")).toBeNull();
+  });
   it("merges by publication time and shares source, language and date controls across tabs", () => {
     render(<ReportingHub newsWire={rss} telegramWire={telegram} locale="en" dictionary={en} />);
     const links = screen.getAllByRole("link", { name: /report|lead/ });
