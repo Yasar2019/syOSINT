@@ -33,6 +33,8 @@ Run `python -m syosint telegram status` to check your local authorization and `p
 
 If an editorial action reports **Pending editorial export unavailable**, an older pending artifact is removed so it cannot be staged accidentally. Fix the local disk or export-directory error, then regenerate the current approved state through `POST http://127.0.0.1:8765/telegram-publications/export-pending` before staging. The private database retains the audit history. A lead must be reviewed within seven days of its original publication, and the public wire accepts at most 500 leads in its active window.
 
+Run one local API process against the private database. The publication and pending-export lock serializes approvals, corrections, and withdrawals inside that process.
+
 Public records contain a manually written bilingual headline, the approved public channel identity, canonical `t.me` URL, timestamps, and editorial correction history. They carry the label **Reviewed external Telegram report — not independently verified**. No original post text, private notes or media is staged. Telegram-derived material must never be sent to AI or machine-learning systems.
 
 Text is untrusted and displayed as plain text. Do not paste raw Telegram content into AI assistants or AI/ML services. Do not commit the private database, downloaded posts, media, or session files.

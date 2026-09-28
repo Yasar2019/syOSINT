@@ -1,6 +1,8 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from pathlib import Path
+from threading import Barrier, BrokenBarrierError
 
 import pytest
 from fastapi.testclient import TestClient
@@ -115,6 +117,43 @@ def test_failed_export_clears_stale_pending_file_and_can_be_rebuilt(local, monke
     assert client.post("/telegram-publications/export-pending").status_code == 200
     exported = json.loads(pending.read_text())
     assert exported["entries"][0]["status"] == "withdrawn"
+
+
+def test_simultaneous_approvals_share_the_last_capacity_slot(local, monkeypatch):
+    import syosint.api as api_module
+    import syosint.telegram_publication as publication_service
+    client, app, item_id, root = local
+    monkeypatch.setattr(publication_service, "MAX_PUBLIC_TELEGRAM_ENTRIES", 1)
+    with Session(app.state.engine) as db:
+        second = IntakeItem(
+            source_id=1, platform="telegram", fingerprint="c" * 64,
+            native_id="8", headline=None, url="https://t.me/publicnews/8",
+            text="SECOND PRIVATE POST", published_at=now() - timedelta(hours=1),
+            collected_at=now(), raw_digest="d" * 64, status="new",
+        )
+        db.add(second)
+        db.commit()
+        second_id = second.id
+    drafts = {identifier: client.post(f"/intake-items/{identifier}/publication-preview", json=payload()).json()["draft_hash"]
+              for identifier in (item_id, second_id)}
+    barrier = Barrier(2)
+    approve = api_module.approve_publication
+
+    def overlap_approvals(*args, **kwargs):
+        try:
+            barrier.wait(timeout=0.2)
+        except BrokenBarrierError:
+            pass
+        return approve(*args, **kwargs)
+
+    monkeypatch.setattr(api_module, "approve_publication", overlap_approvals)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        results = list(workers.map(lambda identifier: client.post(
+            f"/intake-items/{identifier}/publication-approve",
+            json={**payload(), "draft_hash": drafts[identifier]}), (item_id, second_id)))
+    assert sorted(result.status_code for result in results) == [200, 409]
+    exported = json.loads((root / "pending-exports/telegram-pending.v1.json").read_text())
+    assert len(exported["entries"]) == 1
 
 
 def test_source_edit_and_deletion_require_explicit_correction_and_withdrawal(local):
