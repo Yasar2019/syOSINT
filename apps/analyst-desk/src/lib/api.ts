@@ -67,3 +67,21 @@ export type TelegramChannel = {
   status: string | null;
   last_success_at: string | null;
 };
+
+export type PublicTelegramRecord = {
+  id: string;
+  status: "active" | "corrected" | "withdrawn";
+  channel: { name: string; username: string; language: "en" | "ar" | "mixed" };
+  url: string;
+  headline: { en: string; ar: string };
+  publishedAt: string;
+  approvedAt: string;
+  revisions: Array<{
+    revisedAt: string;
+    action: "corrected" | "withdrawn";
+    reason: { en: string; ar: string };
+    previousHeadline?: { en: string; ar: string };
+  }>;
+};
+export type TelegramPublicationPreview = { item_id: number; draft_hash: string; record: PublicTelegramRecord };
+export type TelegramPublication = { id: number; public_id: string; status: PublicTelegramRecord["status"]; record: PublicTelegramRecord };

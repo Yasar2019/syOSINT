@@ -253,5 +253,6 @@ def publication_attention(db: Session) -> list[dict]:
             reason = "source-edited"
         else:
             continue
-        notices.append({"id": publication.id, "public_id": publication.public_id, "reason": reason})
+        notices.append({"id": publication.id, "item_id": publication.item_id,
+                        "public_id": publication.public_id, "reason": reason})
     return notices

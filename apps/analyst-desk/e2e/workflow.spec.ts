@@ -158,3 +158,54 @@ test("approve a synthetic public channel and keep collected posts private", asyn
   await expect(page.getByText("<img src=x onerror=alert(1)> Synthetic local post")).toBeVisible();
   await expect(page.getByText("Stored locally — never public automatically")).toBeVisible();
 });
+
+test("review, correct, and withdraw an individual Telegram lead locally", async ({ page }) => {
+  const endpoint = "http://127.0.0.1:8765";
+  const channels = await (await page.request.get(`${endpoint}/telegram/channels`)).json() as Array<{ id: number }>;
+  const sourceId = channels[0]?.id ?? (await (await page.request.post(`${endpoint}/telegram/channels`, {
+    data: { username: "publicnews", channel_id: 42, title: "Synthetic Public News", language: "ar" },
+  })).json() as { id: number }).id;
+  await page.request.post(`${endpoint}/telegram/channels/${sourceId}/sync`);
+  const items = await (await page.request.get(`${endpoint}/intake-items?status=new`)).json() as Array<{ id: number; platform: string }>;
+  const post = items.find((item) => item.platform === "telegram");
+  expect(post).toBeDefined();
+  const itemId = post!.id;
+  const submit = async (name: string) => {
+    const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));
+    await page.getByRole("button", { name }).click();
+    await completed;
+    await page.waitForLoadState("networkidle");
+  };
+
+  await page.goto(`/telegram/publication/${itemId}`);
+  await expect(page.getByText("Original Telegram text stays private")).toBeVisible();
+  await page.getByLabel("English public headline").fill("Analyst-reviewed synthetic lead");
+  await page.getByLabel("Arabic public headline").fill("خبر تجريبي راجعه المحلل");
+  for (const label of ["Public channel identity and original link checked", "Person safety assessed", "Operational safety assessed", "I personally reviewed this source for publication"]) {
+    await page.getByLabel(label).check();
+  }
+  await submit("Preview public Telegram lead");
+  await expect(page.getByLabel("Exact sanitized public record")).toContainText("Analyst-reviewed synthetic lead");
+  await expect(page.getByLabel("Exact sanitized public record")).not.toContainText("Synthetic local post");
+  await page.getByLabel("I personally authorize this exact public record").check();
+  await submit("Approve public Telegram lead");
+  await expect(page.getByRole("status")).toContainText("saved locally");
+  const approved = await (await page.request.get(`${endpoint}/intake-items/${itemId}/publication`)).json() as { id: number; status: string };
+  expect(approved.status).toBe("active");
+
+  await page.getByLabel("Corrected English headline").fill("Corrected analyst headline");
+  await page.getByLabel("English correction reason").fill("Attribution clarification");
+  await page.getByLabel("Arabic correction reason").fill("توضيح النسبة");
+  for (const label of ["Public channel identity and original link checked", "Person safety assessed", "Operational safety assessed", "I approve this correction"]) {
+    await page.getByLabel(label).check();
+  }
+  await submit("Save explicit correction");
+  await expect(page.getByText("Reviewed lead · corrected")).toBeVisible();
+
+  await page.getByLabel("English withdrawal reason").fill("Source withdrew the claim");
+  await page.getByLabel("Arabic withdrawal reason").fill("سحب المصدر الادعاء");
+  await page.getByLabel("I authorize the public withdrawal marker").check();
+  await submit("Save explicit withdrawal");
+  await expect(page.getByText("Reviewed lead · withdrawn")).toBeVisible();
+  expect((await (await page.request.get(`${endpoint}/intake-items/${itemId}/publication`)).json() as { status: string }).status).toBe("withdrawn");
+});

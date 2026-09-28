@@ -1,7 +1,8 @@
 import { DashboardClient } from "../components/DashboardClient";
 import { loadPublicDataset } from "../lib/load-public-dataset";
 import { loadPublicNewsWire } from "../lib/load-public-news-wire";
+import { loadPublicTelegramWire } from "../lib/load-public-telegram-wire";
 
 export default function HomePage() {
-  return <DashboardClient dataset={loadPublicDataset()} newsWire={loadPublicNewsWire()} />;
+  return <DashboardClient dataset={loadPublicDataset()} newsWire={loadPublicNewsWire()} telegramWire={loadPublicTelegramWire()} />;
 }

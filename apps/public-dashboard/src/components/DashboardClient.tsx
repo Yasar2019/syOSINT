@@ -6,6 +6,7 @@ import type {
   IncidentCategory,
   PublicDataset,
   PublicNewsWire,
+  PublicTelegramWire,
 } from "@syosint/schemas";
 import { getDictionary, getDirection } from "../i18n/get-dictionary";
 import type { Locale } from "../i18n/types";
@@ -19,14 +20,16 @@ import { SummaryCards } from "./SummaryCards";
 import { SyriaMap } from "./SyriaMap";
 import { Timeline } from "./Timeline";
 import { NewsWire } from "./NewsWire";
+import { SourceReporting } from "./SourceReporting";
 import Link from "next/link";
 
 function toggleValue<T>(values: T[], value: T): T[] {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 }
 
-export function DashboardClient({ dataset, newsWire }: { dataset: PublicDataset; newsWire: PublicNewsWire }) {
+export function DashboardClient({ dataset, newsWire, telegramWire }: { dataset: PublicDataset; newsWire: PublicNewsWire; telegramWire: PublicTelegramWire }) {
   const [locale, setLocale] = useState<Locale>("en");
+  const [reportingMode, setReportingMode] = useState<"all" | "rss" | "telegram">("all");
   const [categories, setCategories] = useState<IncidentCategory[]>([]);
   const [confidence, setConfidence] = useState<ConfidenceLabel[]>([]);
   const [search, setSearch] = useState("");
@@ -62,7 +65,8 @@ export function DashboardClient({ dataset, newsWire }: { dataset: PublicDataset;
       />
       {dataset.synthetic && <DemoBanner dictionary={dictionary} />}
       <main id="main-content">
-        <NewsWire wire={newsWire} locale={locale} dictionary={dictionary} />
+        <SourceReporting wire={telegramWire} locale={locale} dictionary={dictionary} onModeChange={setReportingMode} />
+        {reportingMode !== "telegram" && <NewsWire wire={newsWire} locale={locale} dictionary={dictionary} />}
         <SummaryCards incidents={incidents} dictionary={dictionary} />
         <FilterBar
           dictionary={dictionary}

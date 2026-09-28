@@ -14,6 +14,12 @@ Every wire item is labeled **Unverified external reporting**. Inclusion means on
 
 The displayed refresh time and aggregate source state help readers distinguish a current wire from a delayed one. A delayed feed does not imply that no news exists. The last valid deployment remains online when collection, validation, or building fails.
 
+## Human-approved Telegram reporting
+
+Each public Telegram lead is written and individually approved by a human analyst after source identity, person safety, and operational safety checks. The private review page shows the precise bilingual public preview; approval creates a private pending export. A second, explicit staging step validates and adds sanitized data to the tracked public Telegram wire. A reviewed public data change and deployment are required before visitors see it. Approving a channel, collecting a post, or promoting a case cannot publish a Telegram lead.
+
+Public entries carry **Reviewed external Telegram report — not independently verified**, a channel name, an approved public `t.me` link, manually written English and Arabic headlines, and editorial timestamps. The last editorial update is shown separately from the RSS refresh time. The dashboard displays only the past seven days from source publication; corrections preserve previous headlines and bilingual reasons, while withdrawals leave a marker without linking the withdrawn headline. Original Telegram text, media, private notes, and credentials never enter the public artifact. Telegram-derived content must not be sent to AI or machine-learning systems.
+
 ## Reviewed incidents
 
 Reviewed incidents are created and published through the private analyst workflow. Analysts inspect public source material, preserve provenance, attach evidence, write bilingual public summaries, select category and safe geographic precision, record uncertainty and confidence rationale, and complete verification and safety checks. Publication is explicit and fails closed.

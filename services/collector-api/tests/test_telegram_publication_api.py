@@ -69,6 +69,10 @@ def test_preview_approve_and_manual_stage_require_individual_consent(local):
     })
     assert approved.status_code == 200
     assert approved.json()["status"] == "active"
+    lookup = client.get(f"{path}/publication")
+    assert lookup.status_code == 200
+    assert lookup.json()["record"] == draft["record"]
+    assert "PRIVATE SYNTHETIC POST" not in lookup.text
     pending = root / "pending-exports/telegram-pending.v1.json"
     assert pending.exists()
     assert "PRIVATE SYNTHETIC POST" not in pending.read_text()
@@ -126,3 +130,13 @@ def test_source_edit_and_deletion_require_explicit_correction_and_withdrawal(loc
         "corrected", "withdrawn",
     ]
     assert "PRIVATE SYNTHETIC POST" not in json.dumps(pending)
+
+
+def test_analyst_fetches_exact_unexpired_preview_without_source_text(local):
+    client, app, item_id, root = local
+    draft = client.post(f"/intake-items/{item_id}/publication-preview", json=payload()).json()
+    response = client.get(f"/telegram-publication-previews/{draft['draft_hash']}")
+    assert response.status_code == 200
+    assert response.json() == {"item_id": item_id, **draft}
+    assert "PRIVATE SYNTHETIC POST" not in response.text
+    assert client.get("/telegram-publication-previews/" + "0" * 64).status_code == 404

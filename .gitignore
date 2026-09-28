@@ -25,3 +25,4 @@ __pycache__/
 *.egg-info/
 *.py[cod]
 apps/public-dashboard/public/news-wire.v1.json
+apps/public-dashboard/public/telegram-wire.v1.json

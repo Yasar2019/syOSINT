@@ -3,12 +3,14 @@ import { describe, expect, it } from "vitest";
 import { DashboardClient } from "./DashboardClient";
 import { loadPublicDataset } from "../lib/load-public-dataset";
 import { loadPublicNewsWire } from "../lib/load-public-news-wire";
+import { loadPublicTelegramWire } from "../lib/load-public-telegram-wire";
 
 const renderDashboard = () =>
   render(
     <DashboardClient
       dataset={loadPublicDataset()}
       newsWire={loadPublicNewsWire()}
+      telegramWire={loadPublicTelegramWire()}
     />,
   );
 
@@ -47,7 +49,7 @@ describe("DashboardClient", () => {
     const dataset = structuredClone(loadPublicDataset());
     dataset.incidents[0].title.en = "<img src=x onerror=alert(1)>";
 
-    render(<DashboardClient dataset={dataset} newsWire={loadPublicNewsWire()} />);
+    render(<DashboardClient dataset={dataset} newsWire={loadPublicNewsWire()} telegramWire={loadPublicTelegramWire()} />);
 
     expect(screen.getAllByText("<img src=x onerror=alert(1)>")).not.toHaveLength(0);
     expect(document.querySelector("img[src='x']")).toBeNull();

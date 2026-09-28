@@ -126,7 +126,7 @@ def test_correction_and_withdrawal_append_explicit_history(db):
     item.raw_digest = "c" * 64
     session.commit()
     assert publication_attention(session) == [
-        {"id": publication.id, "public_id": "telegram:42:7", "reason": "source-edited"}
+        {"id": publication.id, "item_id": item_id, "public_id": "telegram:42:7", "reason": "source-edited"}
     ]
     corrected = correct_publication(
         session, publication.id, approval_payload(headline_en="Corrected analyst headline"),

@@ -2,7 +2,7 @@
 
 syOSINT is an open-source, bilingual situational-awareness workspace for journalists and OSINT researchers monitoring public reporting about Syria. It is designed around traceable evidence, human verification, explicit uncertainty, and safety-aware publication.
 
-> **Current milestone:** Milestones 1–3 and the expanded public RSS news wire are deployed. Local Telegram intake and the private analyst views are under review in draft PR #14. Individually approved public Telegram items remain a separate future release. The reviewed incident dataset remains synthetic until a human explicitly publishes approved incident records.
+> **Current milestone:** Milestones 1–3 and the expanded public RSS news wire are deployed. Local Telegram intake and private analyst views have merged. The individually approved public Telegram wire is under review in draft PR #15. The reviewed incident dataset remains synthetic until a human explicitly publishes approved incident records.
 
 ## Principles
 
@@ -31,7 +31,7 @@ The public side is a statically exported Next.js application that consumes valid
 
 The reviewed feed pool has nine English and Arabic sources, including North Press and Enab Baladi English. See the [dated source review record](docs/source-policy/RSS-SOURCE-REVIEWS.md) for exact endpoints, terms, attribution evidence, and rejected candidates.
 
-The local-only FastAPI service owns SQLite evidence, RSS and optional public-channel Telegram intake, and the human-gated incident export. The separate local Next.js desk calls the service server-side. Raw feed bodies, posts, evidence, analyst notes, and quarantined payloads never enter the static dashboard or Git repository. Telegram content has no public publication path in this draft branch.
+The local-only FastAPI service owns SQLite evidence, RSS and optional public-channel Telegram intake, and the human-gated incident export. The separate local Next.js desk calls the service server-side. Raw feed bodies, posts, evidence, analyst notes, and quarantined payloads never enter the static dashboard or Git repository. Public Telegram headlines require item-specific review, explicit approval, a local pending export, manual staging and a reviewed public data change.
 
 The approved documents are:
 
@@ -88,6 +88,8 @@ Open `http://127.0.0.1:3001/rss` to register a public HTTPS RSS/Atom feed, inspe
 
 Open `http://127.0.0.1:3001/intake` for the private unified RSS and Telegram queue. For public-channel Telegram intake, first read the [local Telegram operating guide](docs/source-policy/TELEGRAM.md); authenticate only in your terminal and approve each public channel in the local desk at `/telegram`. Collection and promotion do **not** publish posts to the public dashboard.
 
+To publish a specific Telegram report, open its private `/telegram/publication/{item_id}` review page, write both public headlines yourself, complete the safety checklist, inspect the exact preview, and explicitly approve it. The API writes a private pending export. Stage it separately with `python -m syosint.telegram_publish_cli stage --confirm-publication --pending PATH_TO_PENDING_JSON --output data/public/telegram-wire.v1.json`, review the resulting diff and merge the public data change. Corrections and withdrawals follow the same explicit staging path. The dashboard displays approved records for seven days, with a distinct editorial update time and unverified disclosure. No Telegram client or credentials run in Pages workflows.
+
 To exercise the reviewed-incident workflow: promote a collected item or register a public HTTPS source manually, create a bilingual case, attach evidence, complete all public fields, move through `investigating` and `review-ready`, record human verification and safety checks, move to `approved`, examine the exact preview, and explicitly export. Promotion never invents a summary, category, confidence, or location. The desk deliberately locks approved cases against further evidence edits. Correction and withdrawal workflows remain future work; don't use this prototype to publish events needing changes after approval.
 
 To test the public collector locally without changing the checked-in dataset:
@@ -120,7 +122,7 @@ After merging to `main`, select **Settings → Pages → Source → GitHub Actio
 
 ## Roadmap
 
-The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. RSS collection is implemented in Milestone 3. Local public-channel Telegram intake is under review in draft PR #14; the individually approved public Telegram wire remains unimplemented.
+The [approved product design](docs/superpowers/specs/2026-09-22-syosint-design.md) defines the complete local-first system and safety model. RSS collection is implemented in Milestone 3. Local public-channel Telegram intake has merged into main; the individually approved public Telegram wire is under review in draft PR #15.
 
 ## License
 

@@ -1,5 +1,19 @@
 import { expect, test } from "@playwright/test";
 
+test("switches public reporting modes and explains pending Telegram approvals in both languages", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("tab", { name: "All reporting" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: "Approved Telegram" }).click();
+  await expect(page.getByText("No approved Telegram reports are available in the past seven days.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Live News Wire" })).toHaveCount(0);
+  await page.getByRole("tab", { name: "RSS / Atom" }).click();
+  await expect(page.getByRole("heading", { name: "Live News Wire" })).toBeVisible();
+  await page.getByRole("button", { name: "العربية" }).click();
+  await page.getByRole("tab", { name: "تيليغرام الموافق عليه" }).click();
+  await expect(page.getByText("لا توجد تقارير تيليغرام موافق عليها خلال الأيام السبعة الماضية.")).toBeVisible();
+  await expect(page.getByTestId("dashboard-root")).toHaveAttribute("dir", "rtl");
+});
+
 test("filters incidents and preserves filters when switching to Arabic", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Live News Wire" })).toBeVisible();

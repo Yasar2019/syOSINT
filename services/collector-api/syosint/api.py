@@ -2,7 +2,7 @@ import hashlib
 import ipaddress
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -406,6 +406,25 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
             write_pending_telegram_export(app.state.export_dir, records, now())
         except (OSError, ValueError, PublicSchemaError):
             raise HTTPException(503, "Pending editorial export unavailable") from None
+
+    @app.get("/telegram-publication-previews/{draft_hash}")
+    def get_telegram_publication_preview(draft_hash: str, db: Session = Depends(session)):
+        if len(draft_hash) != 64 or any(character not in "0123456789abcdef" for character in draft_hash):
+            raise HTTPException(404, "Preview unavailable")
+        draft = db.scalar(select(TelegramPublicationPreview).where(
+            TelegramPublicationPreview.draft_hash == draft_hash))
+        if draft is None or (draft.expires_at.replace(tzinfo=UTC) if draft.expires_at.tzinfo is None else draft.expires_at) < now():
+            raise HTTPException(404, "Preview expired; review again")
+        return {"item_id": draft.item_id, "draft_hash": draft.draft_hash, "record": draft.record}
+
+    @app.get("/intake-items/{item_id}/publication")
+    def get_telegram_publication(item_id: int, db: Session = Depends(session)):
+        publication = db.scalar(select(TelegramPublication).where(
+            TelegramPublication.item_id == item_id))
+        if publication is None:
+            raise HTTPException(404, "Publication unavailable")
+        return {"id": publication.id, "public_id": publication.public_id,
+                "status": publication.status, "record": publication.record}
 
     @app.post("/intake-items/{item_id}/publication-preview")
     def preview_telegram_publication(item_id: int, item: PublicationPreviewInput,
