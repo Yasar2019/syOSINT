@@ -67,10 +67,12 @@ Current sequence:
 - Milestone 1: public dashboard — complete
 - Milestone 2: private analyst desk — complete
 - Milestone 3: RSS — complete and deployed
-- Milestone 4: source expansion and Telegram intake — implementation plans pending review
-- Milestone 5: discovery/hardening — not started
+- Milestone 4: source expansion and Telegram intake/publication — merged; public dashboard build served
+- Milestone 5: discovery/hardening — design pending
 
 Milestone 4 includes RSS allowlist expansion, a shared RSS/Telegram private intake core, local read-only collection from manually approved public Telegram channels, and a separate human-approved public Telegram wire. Channel approval never authorizes automatic publication. Telegram-derived content remains excluded from AI/ML processing.
+
+The public build check confirms the Telegram UI is served; it does not constitute a real-account collection or live-post publication test. See `docs/PROJECT_STATE.md` for the latest evidence and the next task.
 
 ## 6. Before ending a session
 
