@@ -3,13 +3,13 @@
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
 **Current branch:** `main`
-**Last completed milestone:** Milestone 3 — RSS collection and public news wire
-**Current milestone:** Milestone 4 — Telegram publication merged; verify Pages deployment
-**Source of truth updated:** 2026-09-28
+**Last completed milestone:** Milestone 4 — source expansion and Telegram publication
+**Current milestone:** Milestone 5 — discovery and hardening, design pending
+**Source of truth updated:** 2026-09-29
 
 ## Current release state
 
-PRs #1 through #15 are merged into `main`. Milestones 1–3 and Milestone 4's public RSS coverage, local Telegram intake, and item-specific Telegram publication workflow are merged. PR #15 passed Python 3.14 CI, browser tests, and the live RSS gate before merging as `9199406`. Pages deployment after the merge has not been independently verified from this environment. The tracked Telegram dataset is empty until a real report is individually approved and staged.
+PRs #1 through #16 are merged into `main`. Milestones 1–3 and Milestone 4's public RSS coverage, local Telegram intake, and item-specific Telegram publication workflow are merged. PR #15 passed Python 3.14 CI, browser tests, and the live RSS gate before merging as `9199406`. On 2026-09-29 UTC, the public Pages URL returned HTTP 200 with a `Last-Modified` time of 2026-09-28 14:48 UTC, after PR #15 merged at 14:33 UTC; its HTML contains both “Approved Telegram” and “Live News Wire.” This verifies that the new public dashboard build is served, but does not test a real Telegram account or a real approved post. The tracked Telegram dataset remains empty until a real report is individually approved and staged.
 
 The public dashboard provides:
 
@@ -42,13 +42,17 @@ The public wire retains seven days of headlines, capped at 100 per source and 50
 
 The automatic public path is deliberately narrow: only source identity/status, reviewed legal attribution, original headline, publication/collection/refresh times, language, stable identifier, retained count, and canonical publisher link may appear. It never exports article bodies, descriptions, failure detail, analyst notes, evidence, locations, incident claims, or confidence labels. Reviewed incidents still require explicit human safety and publication actions. General incident correction and withdrawal tooling remains Milestone 5 scope; Milestone 4 includes only the minimum revision handling required for human-approved public Telegram leads.
 
-## Active work
+## Completed Milestone 4
 
-Milestone 4 combines public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The local intake and analyst views merged through PR #14. PR #15 merged the versioned and validated public Telegram contract, append-only private editorial review, item-specific preview and approval, a private pending export, manual staging, bilingual public presentation, and dual-contract Pages validation. A channel approval still only enables private collection. Each public Telegram record requires explicit item approval, manual staging, a reviewed and merged public data change, and Pages deployment. The public Telegram dataset contains zero entries until an analyst publishes a real approved report. Confirm the post-merge Pages deployment before marking Milestone 4 complete.
+Milestone 4 combines public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The local intake and analyst views merged through PR #14. PR #15 merged the versioned and validated public Telegram contract, append-only private editorial review, item-specific preview and approval, a private pending export, manual staging, bilingual public presentation, and dual-contract Pages validation. The post-merge public build was verified as served on 2026-09-29 UTC. A channel approval still only enables private collection. Each public Telegram record requires explicit item approval, manual staging, a reviewed and merged public data change, and Pages deployment. The public Telegram dataset contains zero entries until an analyst publishes a real approved report. Real-account collection and publication remain an operator acceptance check, not a completed live test.
 
-Active design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
+## Next work
 
-Active plans:
+Milestone 5 discovery and hardening is not yet designed. Start with a focused design for the first roadmap item before implementing it: candidate-source review, grouping suggestions, general incident correction/withdrawal tooling, retention jobs, backup documentation, or threat-model review. Keep the real-account Telegram acceptance check separate from development; never place credentials or raw posts in the repository.
+
+Milestone 4 design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
+
+Milestone 4 plans:
 
 - `docs/superpowers/plans/2026-09-24-public-rss-coverage.md`
 - `docs/superpowers/plans/2026-09-24-shared-intake-telegram.md`
