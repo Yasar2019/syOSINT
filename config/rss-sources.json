@@ -48,6 +48,24 @@
       "attributionUrl": "https://npasyria.com/"
     },
     {
+      "id": "hawar-news-english",
+      "label": { "en": "Hawar News Agency — English", "ar": "وكالة أنباء هاوار — الإنجليزية" },
+      "feedUrl": "https://hawarnews.com/en/rss/latest-posts", "homepageUrl": "https://hawarnews.com/en/",
+      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib", "Raqqa", "Hasakah", "Qamishli", "Qamishlo", "Kobani", "Deir ez-Zor", "Deir Ezzor", "Daraa", "Sweida"], "excludedTerms": [],
+      "attribution": "Hawar News Agency (ANHA) — original headlines and links; all rights reserved",
+      "attributionUrl": "https://hawarnews.com/en/about"
+    },
+    {
+      "id": "hawar-news-arabic",
+      "label": { "en": "Hawar News Agency — Arabic", "ar": "وكالة أنباء هاوار — العربية" },
+      "feedUrl": "https://hawarnews.com/ar/rss/latest-posts", "homepageUrl": "https://hawarnews.com/ar/",
+      "language": "ar", "enabled": true, "topicMode": "keyword-filtered",
+      "requiredTerms": ["سوريا", "سوري", "دمشق", "حلب", "إدلب", "الرقة", "الحسكة", "دير الزور", "القامشلي", "قامشلو", "كوباني", "السويداء", "درعا"], "excludedTerms": [],
+      "attribution": "وكالة أنباء هاوار — العناوين وروابط المصدر؛ جميع الحقوق محفوظة",
+      "attributionUrl": "https://hawarnews.com/en/about"
+    },
+    {
       "id": "govuk-syria-news",
       "label": { "en": "GOV.UK — Syria news", "ar": "حكومة المملكة المتحدة — أخبار سوريا" },
       "feedUrl": "https://www.gov.uk/search/news-and-communications.atom?keywords=Syria",
