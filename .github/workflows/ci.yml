@@ -59,7 +59,7 @@ jobs:
       - name: Build static dashboard
         run: pnpm build
       - name: Install Chromium
-        run: pnpm --filter @syosint/public-dashboard exec playwright install --with-deps chromium
+        run: pnpm --filter @syosint/public-dashboard exec playwright install chromium
       - name: Run browser tests
         run: pnpm test:e2e
       - name: Run analyst desk browser workflow
