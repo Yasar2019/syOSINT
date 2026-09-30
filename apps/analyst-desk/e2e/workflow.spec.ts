@@ -209,3 +209,52 @@ test("review, correct, and withdraw an individual Telegram lead locally", async 
   await expect(page.getByText("Reviewed lead · withdrawn")).toBeVisible();
   expect((await (await page.request.get(`${endpoint}/intake-items/${itemId}/publication`)).json() as { status: string }).status).toBe("withdrawn");
 });
+
+test("candidate review preserves rejection history and never activates sources", async ({ page }) => {
+  const endpoint = "http://127.0.0.1:8765";
+  const sourcesBefore = await (await page.request.get(`${endpoint}/sources`)).json() as unknown[];
+  const channelsBefore = await (await page.request.get(`${endpoint}/telegram/channels`)).json() as unknown[];
+  const submit = async (scope: ReturnType<typeof page.locator>, name: string) => {
+    const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));
+    await scope.getByRole("button", { name, exact: true }).click();
+    await completed;
+    await page.waitForLoadState("networkidle");
+  };
+  for (const [platform, url, name] of [
+    ["web", "https://candidate.example/research", "Synthetic web candidate"],
+    ["telegram", "https://t.me/candidate_news", "Synthetic channel candidate"],
+  ]) {
+    await page.goto("/candidates");
+    await expect(page.getByText("It does not start collection", { exact: false })).toBeVisible();
+    await page.getByLabel("Platform", { exact: true }).selectOption(platform);
+    await page.getByLabel("Public HTTPS URL").fill(url);
+    await page.getByLabel("Display name").fill(name);
+    await page.getByLabel("Suggestion reason").fill("Synthetic source for manual policy review");
+    await submit(page.locator("main"), "Submit candidate");
+    let candidate = page.locator("article.feed-item").filter({ hasText: name });
+    await expect(candidate).toContainText("No reviews yet.");
+    await candidate.getByLabel("Review reason").fill("Provenance requires further review");
+    await submit(candidate, "Record review");
+    await page.getByRole("navigation", { name: "Candidate status" }).getByRole("link", { name: "Rejected", exact: true }).click();
+    candidate = page.locator("article.feed-item").filter({ hasText: name });
+    await expect(candidate).toContainText("Provenance requires further review");
+    await page.reload();
+    await expect(candidate).toContainText("Public accessibility: unchecked");
+    await candidate.getByLabel("Decision", { exact: true }).selectOption("accepted");
+    await candidate.getByLabel("Review reason").fill("All five source policy checks completed by analyst");
+    for (const label of ["Public accessibility", "Syria relevance", "Publisher/channel identity and impersonation", "Provenance", "Collection/reuse policy"]) {
+      await candidate.getByLabel(label, { exact: true }).check();
+    }
+    await submit(candidate, "Record review");
+    await page.getByRole("navigation", { name: "Candidate status" }).getByRole("link", { name: "Accepted", exact: true }).click();
+    candidate = page.locator("article.feed-item").filter({ hasText: name });
+    await page.reload();
+    await expect(candidate).toContainText("Provenance requires further review");
+    await expect(candidate).toContainText("All five source policy checks completed by analyst");
+    await expect(candidate.locator("ol > li")).toHaveCount(2);
+    await expect(candidate.locator("ol > li").first()).toContainText("rejected");
+    await expect(candidate.locator("ol > li").last()).toContainText("accepted");
+  }
+  expect(await (await page.request.get(`${endpoint}/sources`)).json()).toEqual(sourcesBefore);
+  expect(await (await page.request.get(`${endpoint}/telegram/channels`)).json()).toEqual(channelsBefore);
+});

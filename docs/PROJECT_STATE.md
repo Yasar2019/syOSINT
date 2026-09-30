@@ -2,10 +2,10 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `main`
+**Current branch:** `feat/candidate-source-review` (PR #18; pending CI and merge)
 **Last completed milestone:** Milestone 4 — source expansion and Telegram publication
-**Current milestone:** Milestone 5 — discovery and hardening, design pending
-**Source of truth updated:** 2026-09-29
+**Current milestone:** Milestone 5 — candidate-source review implemented on PR #18; pending CI and merge
+**Source of truth updated:** 2026-09-30
 
 ## Current release state
 
@@ -46,9 +46,18 @@ The automatic public path is deliberately narrow: only source identity/status, r
 
 Milestone 4 combines public RSS source expansion with local public-Telegram intake and an individually human-approved public Telegram wire. The local intake and analyst views merged through PR #14. PR #15 merged the versioned and validated public Telegram contract, append-only private editorial review, item-specific preview and approval, a private pending export, manual staging, bilingual public presentation, and dual-contract Pages validation. The post-merge public build was verified as served on 2026-09-29 UTC. A channel approval still only enables private collection. Each public Telegram record requires explicit item approval, manual staging, a reviewed and merged public data change, and Pages deployment. The public Telegram dataset contains zero entries until an analyst publishes a real approved report. Real-account collection and publication remain an operator acceptance check, not a completed live test.
 
+## Milestone 5 work awaiting merge
+
+PR #18 implements private candidate-source submission, strict public URL validation, duplicate/conflict handling, append-only review history, five-check acceptance, and a private desk queue with status filters and pagination. Candidates remain inert: acceptance creates no registered source, collection authorization, allowlist entry, export, or public dashboard change. Synthetic API and desk tests cover this boundary; the integrated browser workflow covers web and public-channel suggestions, rejection, revisit, and acceptance with preserved history.
+
+This work is implemented on the PR branch, not released on `main`. Local Chromium installation is blocked by an empty invalid download; PR CI is the authoritative browser gate. Merge requires green CI and whole-branch review. Real-account Telegram collection and publication acceptance remain pending and separate from this synthetic workflow.
+
 ## Next work
 
-Milestone 5 discovery and hardening is not yet designed. Start with a focused design for the first roadmap item before implementing it: candidate-source review, grouping suggestions, general incident correction/withdrawal tooling, retention jobs, backup documentation, or threat-model review. Keep the real-account Telegram acceptance check separate from development; never place credentials or raw posts in the repository.
+Finish PR #18 verification, whole-branch review, and merge before marking candidate review released. Then design the next independent Milestone 5 slice: grouping suggestions. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain later roadmap items. Never place credentials or raw posts in the repository.
+
+Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
+Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.
 
 Milestone 4 design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 
