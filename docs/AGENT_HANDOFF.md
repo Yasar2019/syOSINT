@@ -68,7 +68,7 @@ Current sequence:
 - Milestone 2: private analyst desk — complete
 - Milestone 3: RSS — complete and deployed
 - Milestone 4: source expansion and Telegram intake/publication — merged; public dashboard build served
-- Milestone 5: candidate-source review — approved design; implemented on PR #18, pending CI, whole-branch review, and merge. Subsequent discovery/hardening slices require their own designs.
+- Milestone 5: private candidate-source review — first slice merged through PR #18 as `d61a80d` after green CI and whole-branch review. Next, design grouping suggestions as a separate slice; subsequent discovery/hardening work requires its own design.
 
 Milestone 4 includes RSS allowlist expansion, a shared RSS/Telegram private intake core, local read-only collection from manually approved public Telegram channels, and a separate human-approved public Telegram wire. Channel approval never authorizes automatic publication. Telegram-derived content remains excluded from AI/ML processing.
 
