@@ -236,9 +236,11 @@ test("candidate review preserves rejection history and never activates sources",
     await candidate.getByLabel("Review reason").fill("Provenance requires further review");
     await submit(candidate, "Record review");
     await page.getByRole("navigation", { name: "Candidate status" }).getByRole("link", { name: "Rejected", exact: true }).click();
+    await expect(page).toHaveURL(/\/candidates\?status=rejected$/);
     candidate = page.locator("article.feed-item").filter({ hasText: name });
     await expect(candidate).toContainText("Provenance requires further review");
     await page.reload();
+    await expect(page).toHaveURL(/\/candidates\?status=rejected$/);
     await expect(candidate).toContainText("Public accessibility: unchecked");
     await candidate.locator('select[name="decision"]').selectOption("accepted");
     await candidate.getByLabel("Review reason").fill("All five source policy checks completed by analyst");
@@ -247,8 +249,11 @@ test("candidate review preserves rejection history and never activates sources",
     }
     await submit(candidate, "Record review");
     await page.getByRole("navigation", { name: "Candidate status" }).getByRole("link", { name: "Accepted", exact: true }).click();
+    await expect(page).toHaveURL(/\/candidates\?status=accepted$/);
     candidate = page.locator("article.feed-item").filter({ hasText: name });
+    await expect(candidate).toBeVisible();
     await page.reload();
+    await expect(page).toHaveURL(/\/candidates\?status=accepted$/);
     await expect(candidate).toContainText("Provenance requires further review");
     await expect(candidate).toContainText("All five source policy checks completed by analyst");
     await expect(candidate.locator("ol > li")).toHaveCount(2);
