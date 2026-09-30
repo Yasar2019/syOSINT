@@ -226,7 +226,7 @@ test("candidate review preserves rejection history and never activates sources",
   ]) {
     await page.goto("/candidates");
     await expect(page.getByText("It does not start collection", { exact: false })).toBeVisible();
-    await page.getByLabel("Platform", { exact: true }).selectOption(platform);
+    await page.locator("form").filter({ has: page.getByRole("button", { name: "Submit candidate", exact: true }) }).locator('select[name="platform"]').selectOption(platform);
     await page.getByLabel("Public HTTPS URL").fill(url);
     await page.getByLabel("Display name").fill(name);
     await page.getByLabel("Suggestion reason").fill("Synthetic source for manual policy review");
@@ -240,7 +240,7 @@ test("candidate review preserves rejection history and never activates sources",
     await expect(candidate).toContainText("Provenance requires further review");
     await page.reload();
     await expect(candidate).toContainText("Public accessibility: unchecked");
-    await candidate.getByLabel("Decision", { exact: true }).selectOption("accepted");
+    await candidate.locator('select[name="decision"]').selectOption("accepted");
     await candidate.getByLabel("Review reason").fill("All five source policy checks completed by analyst");
     for (const label of ["Public accessibility", "Syria relevance", "Publisher/channel identity and impersonation", "Provenance", "Collection/reuse policy"]) {
       await candidate.getByLabel(label, { exact: true }).check();
