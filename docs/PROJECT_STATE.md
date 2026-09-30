@@ -36,7 +36,7 @@ Milestone 3 adds:
 - a bilingual public Live News Wire with source/language filters and stale states;
 - `.github/workflows/rss-wire.yml`, scheduled every 30 minutes with manual dispatch.
 
-Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. The current allowlist has nine reviewed English and Arabic feeds, including North Press and Enab Baladi English. The dated official evidence and rejected candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
+Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. The current allowlist has eleven reviewed English and Arabic feeds, including North Press, Enab Baladi English, and Hawar News Agency English and Arabic. The dated official evidence and deferred candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
 
 The public wire retains seven days of headlines, capped at 100 per source and 500 globally. Both Pages workflows run a shared fail-closed live gate before collection. Safe logs contain one bounded status line per source and the GitHub summary contains aggregate configured/healthy/delayed/item counts only. A gate, collection, schema, test, or build failure leaves the previous Pages artifact in place. Recovery is to inspect the safe category, rerun after a transient outage, or disable and re-review a permanently changed source; the gate must not be bypassed.
 

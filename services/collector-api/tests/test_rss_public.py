@@ -405,6 +405,13 @@ def test_public_wire_rejects_old_items_from_fresh_fetch():
 def test_collect_public_cli_writes_an_atomic_schema_valid_wire(tmp_path, monkeypatch):
     from syosint import rss_cli
 
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW
+
+    monkeypatch.setattr(rss_cli, "datetime", FrozenDatetime)
+
     config = tmp_path / "sources.json"
     output = tmp_path / "news-wire.json"
     config.write_text(
