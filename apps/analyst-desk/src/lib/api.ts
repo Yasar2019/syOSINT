@@ -11,8 +11,17 @@ export async function api<T>(path: string, method = "GET", body?: object): Promi
   });
   if (!response.ok) {
     let detail = `API returned ${response.status}`;
-    try { const result = await response.json(); detail = typeof result.detail === "string" ? result.detail : detail; } catch { /* safe fallback */ }
-    throw new Error(detail);
+    let conflict: { kind: "candidate" | "source"; id: number } | undefined;
+    try {
+      const result = await response.json();
+      detail = typeof result.detail === "string" ? result.detail : detail;
+      const data = result.detail;
+      if (path === "/candidates" && response.status === 409 && data &&
+        (data.kind === "candidate" || data.kind === "source") && Number.isSafeInteger(data.id) && data.id > 0) {
+        conflict = { kind: data.kind, id: data.id };
+      }
+    } catch { /* safe fallback */ }
+    throw Object.assign(new Error(detail), conflict ? { conflict } : {});
   }
   return response.json() as Promise<T>;
 }
@@ -85,3 +94,31 @@ export type PublicTelegramRecord = {
 };
 export type TelegramPublicationPreview = { item_id: number; draft_hash: string; record: PublicTelegramRecord };
 export type TelegramPublication = { id: number; public_id: string; status: PublicTelegramRecord["status"]; record: PublicTelegramRecord };
+
+export type CandidateStatus = "pending" | "accepted" | "rejected";
+export type CandidateChecks = {
+  accessibility_checked: boolean;
+  relevance_checked: boolean;
+  identity_checked: boolean;
+  provenance_checked: boolean;
+  policy_checked: boolean;
+};
+export type CandidateReview = {
+  id: number;
+  candidate_id: number;
+  decision: Exclude<CandidateStatus, "pending">;
+  reason: string;
+  checks: CandidateChecks;
+  created_at: string;
+};
+export type Candidate = {
+  id: number;
+  platform: "web" | "telegram";
+  canonical_url: string;
+  name: string;
+  language: "en" | "ar" | "mixed";
+  suggestion_reason: string;
+  status: CandidateStatus;
+  created_at: string;
+  updated_at: string;
+};

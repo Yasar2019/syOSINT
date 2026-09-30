@@ -239,3 +239,36 @@ export async function withdrawTelegramPublication(form: FormData) {
   } catch (error) { publicationFailure(error, itemId); }
   redirect(`/telegram/publication/${itemId}?withdrawn=1`);
 }
+
+function candidateFailure(error: unknown): never {
+  if (error instanceof Error && "conflict" in error && error.conflict && typeof error.conflict === "object") {
+    const conflict = error.conflict as { kind?: unknown; id?: unknown };
+    if ((conflict.kind === "candidate" || conflict.kind === "source") && typeof conflict.id === "number" && Number.isSafeInteger(conflict.id) && conflict.id > 0) {
+      const params = new URLSearchParams({ error: `Already recorded as ${conflict.kind} #${conflict.id}. Review the existing record.` });
+      if (conflict.kind === "candidate") params.set("candidate", String(conflict.id));
+      redirect(`/candidates?${params.toString()}`);
+    }
+  }
+  redirect(`/candidates?error=${encodeURIComponent("Candidate action failed. Check the fields, all five checks for acceptance, and the local service; the URL may already be recorded.")}`);
+}
+
+export async function addCandidate(form: FormData) {
+  try {
+    await api("/candidates", "POST", {
+      platform: value(form, "platform"), url: value(form, "url"), name: value(form, "name"),
+      language: value(form, "language"), suggestion_reason: value(form, "suggestion_reason"),
+    });
+  } catch (error) { candidateFailure(error); }
+  redirect("/candidates");
+}
+
+export async function reviewCandidate(form: FormData) {
+  try {
+    const keys = ["accessibility_checked", "relevance_checked", "identity_checked", "provenance_checked", "policy_checked"];
+    await api(`/candidates/${positiveId(form, "candidate_id")}/reviews`, "POST", {
+      decision: value(form, "decision"), reason: value(form, "reason"),
+      checks: Object.fromEntries(keys.map((key) => [key, form.get(key) === "on"])),
+    });
+  } catch (error) { candidateFailure(error); }
+  redirect("/candidates");
+}

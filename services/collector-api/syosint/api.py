@@ -8,17 +8,23 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from .candidate_review import (
+    CandidateConflict, CandidateNotFound, candidate_response, review_response,
+    normalize_candidate_url, create_candidate, review_candidate,
+)
 from .db import database, record
 from .export import build_public_record, write_export
 from .models import (
     Audit,
+    SourceCandidate,
+    CandidateReview,
     Evidence,
     FeedCursor,
     IntakeItem,
@@ -72,6 +78,48 @@ def public_url(value: str) -> str:
             url.username or url.password or url.fragment or url.port not in (None, 443)):
         raise ValueError("Use a public HTTPS reference without credentials or fragments")
     return value
+
+
+class CandidateCreate(Strict):
+    platform: Literal["web", "telegram"]
+    url: str = Field(min_length=1, max_length=2048)
+    name: str = Field(min_length=1, max_length=250)
+    language: Literal["en", "ar", "mixed"]
+    suggestion_reason: str = Field(min_length=1, max_length=1000)
+
+    @field_validator("name", "suggestion_reason")
+    @classmethod
+    def nonblank(cls, value):
+        if not value.strip():
+            raise ValueError("A nonblank value is required")
+        return value
+
+    @model_validator(mode="after")
+    def validate_url(self):
+        normalize_candidate_url(self.platform, self.url)
+        return self
+
+
+class CandidateChecks(Strict):
+    accessibility_checked: StrictBool
+    relevance_checked: StrictBool
+    identity_checked: StrictBool
+    provenance_checked: StrictBool
+    policy_checked: StrictBool
+
+
+class CandidateReviewCreate(Strict):
+    decision: Literal["accepted", "rejected"]
+    reason: str = Field(min_length=1, max_length=1000)
+    checks: CandidateChecks
+
+    @model_validator(mode="after")
+    def validate_review(self):
+        if not self.reason.strip():
+            raise ValueError("A review reason is required")
+        if self.decision == "accepted" and not all(self.checks.model_dump().values()):
+            raise ValueError("Acceptance requires all five human checks")
+        return self
 
 
 class SourceInput(Strict):
@@ -296,6 +344,41 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
                 await disconnect()
             except Exception:
                 pass
+
+    @app.post("/candidates", status_code=201)
+    def add_candidate(item: CandidateCreate, db: Session = Depends(session)):
+        try:
+            return create_candidate(db, **item.model_dump())
+        except CandidateConflict as exc:
+            raise HTTPException(409, {"kind": exc.kind, "id": exc.existing_id}) from None
+
+    @app.get("/candidates")
+    def list_candidates(status: Literal["pending", "accepted", "rejected"] | None = None,
+                        limit: int = Query(default=100, ge=1, le=100),
+                        offset: int = Query(default=0, ge=0), db: Session = Depends(session)):
+        query = select(SourceCandidate)
+        if status is not None:
+            query = query.where(SourceCandidate.status == status)
+        return [candidate_response(row) for row in db.scalars(
+            query.order_by(SourceCandidate.id.desc()).limit(limit).offset(offset))]
+
+    @app.get("/candidates/{candidate_id}")
+    def get_candidate(candidate_id: int, db: Session = Depends(session)):
+        candidate = db.get(SourceCandidate, candidate_id)
+        if candidate is None:
+            raise HTTPException(404, "Candidate not found")
+        reviews = db.scalars(select(CandidateReview).where(
+            CandidateReview.candidate_id == candidate_id).order_by(CandidateReview.id))
+        return {**candidate_response(candidate), "reviews": [review_response(row) for row in reviews]}
+
+    @app.post("/candidates/{candidate_id}/reviews", status_code=201)
+    def add_candidate_review(candidate_id: int, item: CandidateReviewCreate,
+                             db: Session = Depends(session)):
+        try:
+            return review_candidate(db, candidate_id, decision=item.decision,
+                                    reason=item.reason, checks=item.checks.model_dump())
+        except CandidateNotFound:
+            raise HTTPException(404, "Candidate not found") from None
 
     @app.get("/telegram/status")
     async def telegram_status():

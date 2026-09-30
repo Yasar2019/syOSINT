@@ -220,3 +220,30 @@ class TelegramPublicationRevision(Base):
 # Transitional names while Task 3 adapts the RSS store and API call sites.
 FeedItem = IntakeItem
 FeedQuarantine = IntakeQuarantine
+
+
+class SourceCandidate(Base):
+    __tablename__ = 'source_candidates'
+    __table_args__ = (
+        UniqueConstraint('platform', 'canonical_url', name='uq_candidate_platform_url'),
+        Index('ix_source_candidates_status', 'status', 'id'),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    platform: Mapped[str] = mapped_column(String(20))
+    canonical_url: Mapped[str] = mapped_column(Text)
+    name: Mapped[str] = mapped_column(String(250))
+    language: Mapped[str] = mapped_column(String(10))
+    suggestion_reason: Mapped[str] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(20), default='pending')
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class CandidateReview(Base):
+    __tablename__ = 'candidate_reviews'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    candidate_id: Mapped[int] = mapped_column(ForeignKey('source_candidates.id'), index=True)
+    decision: Mapped[str] = mapped_column(String(20))
+    reason: Mapped[str] = mapped_column(String(1000))
+    checks: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
