@@ -1,6 +1,6 @@
 # Milestone 5: candidate-source review
 
-**Status:** proposed for owner review  
+**Status:** approved by owner on 2026-09-29 (America/Toronto)
 **Scope:** first independent Milestone 5 release
 
 ## Intent and success
