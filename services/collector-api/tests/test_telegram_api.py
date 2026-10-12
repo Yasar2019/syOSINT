@@ -9,11 +9,12 @@ from syosint.api import create_app
 from syosint.models import Source
 from syosint.telegram_types import ResolvedPublicChannel
 
-from test_telegram_collect import FakeTransport, message
+from test_telegram_collect import FakeTransport, message, NOW
 
 
 @pytest.fixture
 def api(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(api_module, "now", lambda: NOW)
     monkeypatch.setenv("SYOSINT_RSS_SCHEDULER", "0")
     monkeypatch.setenv("SYOSINT_TELEGRAM_SCHEDULER", "0")
     app = create_app(f"sqlite:///{tmp_path / 'private.sqlite'}", tmp_path / "export")

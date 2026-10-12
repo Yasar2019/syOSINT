@@ -2,10 +2,10 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `main` (PR #18 merged as `d61a80d`)
+**Current branch:** `feat/grouping-suggestions` (PR #21; implementation under review)
 **Last completed milestone:** Milestone 5 — private candidate-source review (first slice)
-**Current milestone:** Milestone 5 — design the next independent slice: grouping suggestions
-**Source of truth updated:** 2026-09-30
+**Current milestone:** Milestone 5 — private case grouping suggestions
+**Source of truth updated:** 2026-10-12
 
 ## Current release state
 
@@ -52,9 +52,15 @@ PR #18 merged private candidate-source submission, strict public URL validation,
 
 This work is released on `main` as `d61a80d`. PR CI passed policy, API and desk tests, builds, public RSS verification, and the analyst desk browser workflow after independent review. Real-account Telegram collection and publication acceptance remain pending and separate from this synthetic workflow.
 
+## Private case grouping suggestions — PR #21
+
+The owner approved the written design and plan on 2026-10-12. The implementation adds an optional analyst-entered private governorate and a read-only related-case endpoint/panel. It matches same-category cases within six hours in the same governorate, returns at most ten, and never merges cases or processes source text. The private facet is excluded from public exports. Local verification: 312 API tests, 153 JavaScript tests, lint/typecheck, and both builds pass. Browser acceptance is pending CI because the local Chromium download returned a truncated archive. The expired synthetic Telegram API fixture now uses a fixed clock. PR #20 previously merged the Hawar RSS expansion and CI install fix as `3fba958`.
+
+Design: `docs/superpowers/specs/2026-10-02-case-grouping-suggestions-design.md`. Plan: `docs/superpowers/plans/2026-10-02-case-grouping-suggestions.md`.
+
 ## Next work
 
-Design the next independent Milestone 5 slice: grouping suggestions. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain later roadmap items. Never place credentials or raw posts in the repository.
+Complete PR #21 CI and whole-branch review. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
 
 Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
 Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.

@@ -36,6 +36,7 @@ from .models import (
     TelegramPublicationPreview,
     now,
 )
+from .case_grouping import Governorate, grouping_metadata, related_cases
 from .rss_scheduler import RssScheduler, default_collector
 from .rss_store import store_collection
 from .safe_http import HttpValidators
@@ -221,6 +222,7 @@ class EvidenceInput(Strict):
 
 
 class IncidentEdit(IncidentInput):
+    private_governorate: Governorate | None = None
     summary_en: str
     summary_ar: str
     uncertainty_en: str
@@ -840,6 +842,22 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         if not incident:
             raise HTTPException(404, "Incident not found")
         return {"id": incident.id, "state": incident.state, "review": incident.review, **incident.fields}
+
+    @app.get("/incidents/{incident_id}/related")
+    def list_related_cases(incident_id: int, db: Session = Depends(session)):
+        incident = db.get(Incident, incident_id)
+        if incident is None:
+            raise HTTPException(404, "Incident not found")
+        metadata = grouping_metadata(incident)
+        if metadata is None:
+            return []
+        candidates = db.scalars(select(Incident).where(
+            Incident.id != incident_id,
+            Incident.state != "withdrawn",
+            Incident.fields["category"].as_string() == metadata[2],
+            Incident.fields["private_governorate"].as_string() == metadata[1],
+        ))
+        return related_cases(incident, candidates)
 
     @app.put("/incidents/{incident_id}")
     def edit_incident(incident_id: int, item: IncidentEdit, db: Session = Depends(session)):

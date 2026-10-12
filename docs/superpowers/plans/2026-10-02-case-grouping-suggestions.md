@@ -18,20 +18,20 @@
 
 **Files:** `services/collector-api/syosint/case_grouping.py` (new), `services/collector-api/syosint/api.py`, `services/collector-api/tests/test_case_grouping.py` (new).
 
-- [ ] Add failing API tests for strict governorate values, no metadata, same facet matching within six hours, different category/governorate, timezones, malformed/naive timestamps, withdrawn/self exclusion, ten-result ordering, 404, and side-effect-free repeated reads.
-- [ ] Run the focused test and observe the absent-field/route failure.
-- [ ] Implement a 14-value private governorate enum/validation and the pure matcher. Parse UTC instants, use six hours inclusive, and order by `(absolute time difference, case ID)`.
-- [ ] Add `GET /incidents/{id}/related`, with a database filter for category/governorate and only explicit safe response fields. Keep existing JSON incident storage and export behavior.
-- [ ] Run focused and full API tests. Commit the API change.
+- [x] Add failing API tests for strict governorate values, no metadata, same facet matching within six hours, different category/governorate, timezones, malformed/naive timestamps, withdrawn/self exclusion, ten-result ordering, 404, and side-effect-free repeated reads.
+- [x] Run the focused test and observe the absent-field/route failure.
+- [x] Implement a 14-value private governorate enum/validation and the pure matcher. Parse UTC instants, use six hours inclusive, and order by `(absolute time difference, case ID)`.
+- [x] Add `GET /incidents/{id}/related`, with a database filter for category/governorate and only explicit safe response fields. Keep existing JSON incident storage and export behavior.
+- [x] Run focused and full API tests. Commit the API change.
 
 ## Task 2: private desk presentation
 
 **Files:** `apps/analyst-desk/src/app/actions.ts`, `apps/analyst-desk/src/app/incident/[id]/page.tsx`, `apps/analyst-desk/src/app/incident/[id]/page.test.tsx` (new or extend existing).
 
-- [ ] Add failing page/action tests for the optional governorate select, preserved edit submission, candidate links with time difference, empty/insufficient-data state, API-unavailable state, and clear non-merge wording.
-- [ ] Run the focused desk tests and observe the expected failure.
-- [ ] Add the controlled selection and related-case panel to the private case page. Submit the facet through the existing server action. Never display raw evidence in the suggestion panel.
-- [ ] Run desk tests, lint, typecheck, and build. Commit the desk change.
+- [x] Add failing page/action tests for the optional governorate select, preserved edit submission, candidate links with time difference, empty/insufficient-data state, API-unavailable state, and clear non-merge wording.
+- [x] Run the focused desk tests and observe the expected failure.
+- [x] Add the controlled selection and related-case panel to the private case page. Submit the facet through the existing server action. Never display raw evidence in the suggestion panel.
+- [x] Run desk tests, lint, typecheck, and build. Commit the desk change.
 
 ## Task 3: integrated verification and handoff
 

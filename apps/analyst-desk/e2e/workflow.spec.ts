@@ -1,5 +1,31 @@
 import { expect, test } from "@playwright/test";
 
+test('shows related synthetic cases and preserves the private facet through desk edits', async ({ page }) => {
+  const api = 'http://127.0.0.1:8765';
+  const fields = { title_en: 'Grouping synthetic case', title_ar: 'حالة تجريبية', category: 'disinformation', summary_en: 'Synthetic summary', summary_ar: 'ملخص تجريبي', uncertainty_en: 'Unknown', uncertainty_ar: 'غير مؤكد', location_en: 'Withheld', location_ar: 'محجوب', precision: 'withheld', occurred_at: '2026-10-12T10:00:00Z', confidence: 'unverified', private_governorate: 'aleppo' };
+  const create = async (title: string) => {
+    const response = await page.request.post(`${api}/incidents`, { data: { title_en: title, title_ar: fields.title_ar, category: fields.category } });
+    expect(response.status()).toBe(201);
+    const { id } = await response.json();
+    expect((await page.request.put(`${api}/incidents/${id}`, { data: { ...fields, title_en: title } })).status()).toBe(200);
+    return id as number;
+  };
+  const first = await create('Grouping first synthetic case');
+  const second = await create('Grouping second synthetic case');
+  const before = await (await page.request.get(`${api}/audit`)).json();
+  await page.goto(`/incident/${first}`);
+  await expect(page.getByLabel('Private governorate for grouping')).toHaveValue('aleppo');
+  const related = page.getByRole('region', { name: 'Possible related cases' });
+  await expect(related.getByRole('link', { name: 'Grouping second synthetic case' })).toHaveAttribute('href', `/incident/${second}`);
+  expect(await (await page.request.get(`${api}/audit`)).json()).toEqual(before);
+  expect((await page.request.get(`${api}/incidents/${first}/preview`)).status()).toBe(409);
+  await page.getByLabel('Private governorate for grouping').selectOption('homs');
+  await page.getByRole('button', { name: 'Save public fields' }).click();
+  await expect.poll(async () => (await (await page.request.get(`${api}/incidents/${first}`)).json()).private_governorate).toBe('homs');
+  await page.reload();
+  await expect(page.getByText('No related cases match these rules.')).toBeVisible();
+});
+
 test("collect and promote a synthetic RSS item through the private inbox", async ({ page }) => {
   const submit = async (name: string) => {
     const completed = page.waitForResponse((response) => response.request().method() === "POST" && response.url().startsWith("http://127.0.0.1:3001/"));

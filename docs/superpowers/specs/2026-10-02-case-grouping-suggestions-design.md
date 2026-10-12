@@ -1,5 +1,6 @@
 # Milestone 5: private case grouping suggestions
 
+**Status:** approved by owner on 2026-10-12 (America/Toronto)
 **Scope:** next independent Milestone 5 slice, after candidate-source review  
 **Intent:** help one analyst notice that separately created cases may describe the same event, without making a credibility judgment or merging records automatically.
 
