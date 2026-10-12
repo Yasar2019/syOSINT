@@ -37,10 +37,14 @@
 
 **Files:** `apps/analyst-desk/e2e/workflow.spec.ts`, `docs/PROJECT_STATE.md`, `docs/AGENT_HANDOFF.md` if needed.
 
-- [ ] Add a synthetic browser case pair with matching facets, inspect suggestion, and verify no merge or public export occurs. Run the browser test against the local API.
-- [ ] Run repository policy, Python API tests, JavaScript tests, lint, typecheck, builds, and browser workflows. Review the public export assertion.
+- [x] Add a synthetic browser case pair with matching facets, inspect suggestion, and verify no merge or public export occurs. Run the browser test against the local API.
+- [x] Run repository policy, Python API tests, JavaScript tests, lint, typecheck, builds, and browser workflows. Review the public export assertion.
 - [ ] Update project state with completed scope, verification, and next slice. Review the diff and open a PR against the current `main`; wait for CI and code review before merging.
 
 ## Self-review
 
 The plan covers every design component and keeps candidate-source review, Telegram collection, and the public pipeline untouched. API fields are consumed by the desk after Task 1. Each review-focus risk has a test step. No code step prescribes a function body or broad refactor.
+
+## Execution evidence — 2026-10-12
+
+Owner approved implementation. API tests 312 pass, JavaScript tests 153 pass; policy, lint/typecheck and both builds pass. Independent review found historical facet-type and historical-offset display failures; regression tests were observed RED then GREEN, followed by full green suites. CI verification run `38241546409` passed on `cdac32f`, including seven desk browser tests and the public browser suite. The live RSS gate passed. The separate audit job fails on unpatched braces CVE-2026-93687. No audit exception is active and PR #21 is not merged. Next action: owner review of `docs/DEPENDENCY_AUDIT.md`; all other implementation steps are complete.
