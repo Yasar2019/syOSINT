@@ -2,10 +2,10 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `main` (PR #18 merged as `d61a80d`)
+**Current branch:** `feat/grouping-suggestions` (PR #21; implementation under review)
 **Last completed milestone:** Milestone 5 — private candidate-source review (first slice)
-**Current milestone:** Milestone 5 — design the next independent slice: grouping suggestions
-**Source of truth updated:** 2026-09-30
+**Current milestone:** Milestone 5 — private case grouping suggestions
+**Source of truth updated:** 2026-10-12
 
 ## Current release state
 
@@ -52,9 +52,15 @@ PR #18 merged private candidate-source submission, strict public URL validation,
 
 This work is released on `main` as `d61a80d`. PR CI passed policy, API and desk tests, builds, public RSS verification, and the analyst desk browser workflow after independent review. Real-account Telegram collection and publication acceptance remain pending and separate from this synthetic workflow.
 
+## Private case grouping suggestions — PR #21
+
+The owner approved the written design and plan on 2026-10-12. The implementation adds an optional analyst-entered private governorate and a read-only related-case endpoint/panel. It matches same-category cases within six hours in the same governorate, returns at most ten, and never merges cases or processes source text. The private facet is excluded from public exports. Local verification: 312 API tests, 153 JavaScript tests, lint/typecheck, and both builds pass. CI run `38241546409` verified the implementation on commit `cdac32f`: all verification steps passed, including seven analyst-desk browser workflows and the public browser suite. The owner approved the single braces advisory exception and authorized merge once refreshed checks pass. Browser acceptance used CI because the local Chromium archive was truncated. The expired synthetic Telegram API fixture now uses a fixed clock. The CI audit also found new advisories in the pre-existing JavaScript lockfile. PR #21 updates affected packages and applies the owner-approved exception only for CVE-2026-93687. All other audit controls remain active. See `docs/DEPENDENCY_AUDIT.md`. PR #20 previously merged the Hawar RSS expansion and CI install fix as `3fba958`.
+
+Design: `docs/superpowers/specs/2026-10-02-case-grouping-suggestions-design.md`. Plan: `docs/superpowers/plans/2026-10-02-case-grouping-suggestions.md`.
+
 ## Next work
 
-Design the next independent Milestone 5 slice: grouping suggestions. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain later roadmap items. Never place credentials or raw posts in the repository.
+Refresh PR #21 checks with the approved one-CVE exception, then merge only if all checks pass. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
 
 Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
 Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.

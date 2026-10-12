@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { apiMock, redirectMock } = vi.hoisted(() => ({ apiMock: vi.fn(), redirectMock: vi.fn((url: string): never => { throw new Error(`REDIRECT:${url}`); }) }));
 vi.mock("../lib/api", () => ({ api: apiMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
-import { addCandidate, reviewCandidate } from "./actions";
+import { addCandidate, reviewCandidate, editIncident } from "./actions";
 function form(values: Record<string, string>) { const data = new FormData(); Object.entries(values).forEach(([key, value]) => data.set(key, value)); return data; }
 describe("candidate actions", () => {
   beforeEach(() => { apiMock.mockReset(); redirectMock.mockClear(); });
@@ -39,4 +39,11 @@ describe("candidate actions", () => {
     expect(destination).not.toContain("secret");
     expect(destination.length).toBeLessThan(300);
   });
+});
+it('sends or clears the optional private governorate during incident edits', async () => {
+  apiMock.mockReset();
+  await expect(editIncident(form({ id: '1', private_governorate: 'aleppo' }))).rejects.toThrow('REDIRECT:/incident/1');
+  expect(apiMock.mock.calls[0][2].private_governorate).toBe('aleppo');
+  await expect(editIncident(form({ id: '1', private_governorate: '' }))).rejects.toThrow('REDIRECT:/incident/1');
+  expect(apiMock.mock.calls[1][2].private_governorate).toBeNull();
 });

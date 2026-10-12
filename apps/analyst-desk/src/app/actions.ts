@@ -90,7 +90,8 @@ export async function editIncident(form: FormData) {
   try {
     incidentId = id(form);
     const keys = ["title_en", "title_ar", "category", "summary_en", "summary_ar", "uncertainty_en", "uncertainty_ar", "location_en", "location_ar", "precision", "occurred_at", "confidence"];
-    const fields = Object.fromEntries(keys.map((key) => [key, value(form, key)]));
+    const fields: Record<string, string | null> = Object.fromEntries(keys.map((key) => [key, value(form, key)]));
+    fields.private_governorate = value(form, "private_governorate") || null;
     await api(`/incidents/${incidentId}`, "PUT", fields);
   } catch (error) { failure(error); }
   redirect(`/incident/${incidentId}`);

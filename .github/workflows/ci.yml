@@ -9,6 +9,27 @@ permissions:
   contents: read
 
 jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Audit JavaScript dependencies
+        run: pnpm audit --audit-level high
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -30,8 +51,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Check repository policy
         run: pnpm policy:check
-      - name: Audit JavaScript dependencies
-        run: pnpm audit --audit-level high
       - name: Lint
         run: pnpm lint
       - name: Type-check
