@@ -39,7 +39,7 @@
 
 - [x] Add a synthetic browser case pair with matching facets, inspect suggestion, and verify no merge or public export occurs. Run the browser test against the local API.
 - [x] Run repository policy, Python API tests, JavaScript tests, lint, typecheck, builds, and browser workflows. Review the public export assertion.
-- [ ] Update project state with completed scope, verification, and next slice. Review the diff and open a PR against the current `main`; wait for CI and code review before merging.
+- [x] Update project state with completed scope, verification, and next slice. Review the diff and open a PR against the current `main`; wait for CI and code review before merging.
 
 ## Self-review
 
@@ -47,4 +47,4 @@ The plan covers every design component and keeps candidate-source review, Telegr
 
 ## Execution evidence — 2026-10-12
 
-Owner approved implementation. API tests 312 pass, JavaScript tests 153 pass; policy, lint/typecheck and both builds pass. Independent review found historical facet-type and historical-offset display failures; regression tests were observed RED then GREEN, followed by full green suites. CI verification run `38241546409` passed on `cdac32f`, including seven desk browser tests and the public browser suite. The live RSS gate passed. The owner approved the scoped CVE-2026-93687 exception on 2026-10-12 and authorized merge after all refreshed checks pass. The exception is now configured; final CI and merge remain pending.
+Owner approved implementation. API tests 312 pass, JavaScript tests 153 pass; policy, lint/typecheck and both builds pass. Independent review found historical facet-type and historical-offset display failures; regression tests were observed RED then GREEN, followed by full green suites. CI verification run `38241546409` passed on `cdac32f`, including seven desk browser tests and the public browser suite. The live RSS gate passed. The owner approved the scoped CVE-2026-93687 exception on 2026-10-12 and authorized merge after all refreshed checks pass. The refreshed CI run `38274509841` and RSS verification run `38274509842` passed; PR #21 was squash-merged as `7c0560ddeda985e7f17a975ca0289f68153cfe00`. The handoff records are reconciled in the subsequent RSS test repair.

@@ -2,10 +2,10 @@
 
 **Project:** syOSINT  
 **Repository:** `Yasar2019/syOSINT`  
-**Current branch:** `feat/grouping-suggestions` (PR #21; implementation under review)
-**Last completed milestone:** Milestone 5 — private candidate-source review (first slice)
-**Current milestone:** Milestone 5 — private case grouping suggestions
-**Source of truth updated:** 2026-10-12
+**Release branch:** `main` (PR #21 merged as `7c0560d`)
+**Last completed milestone:** Milestone 5 — private candidate-source review and case grouping suggestions
+**Current milestone:** Milestone 5 — correction/withdrawal design; RSS refresh test repair
+**Source of truth updated:** 2026-10-14
 
 ## Current release state
 
@@ -52,15 +52,21 @@ PR #18 merged private candidate-source submission, strict public URL validation,
 
 This work is released on `main` as `d61a80d`. PR CI passed policy, API and desk tests, builds, public RSS verification, and the analyst desk browser workflow after independent review. Real-account Telegram collection and publication acceptance remain pending and separate from this synthetic workflow.
 
-## Private case grouping suggestions — PR #21
+## Completed Milestone 5 case grouping suggestions — PR #21
 
 The owner approved the written design and plan on 2026-10-12. The implementation adds an optional analyst-entered private governorate and a read-only related-case endpoint/panel. It matches same-category cases within six hours in the same governorate, returns at most ten, and never merges cases or processes source text. The private facet is excluded from public exports. Local verification: 312 API tests, 153 JavaScript tests, lint/typecheck, and both builds pass. CI run `38241546409` verified the implementation on commit `cdac32f`: all verification steps passed, including seven analyst-desk browser workflows and the public browser suite. The owner approved the single braces advisory exception and authorized merge once refreshed checks pass. Browser acceptance used CI because the local Chromium archive was truncated. The expired synthetic Telegram API fixture now uses a fixed clock. The CI audit also found new advisories in the pre-existing JavaScript lockfile. PR #21 updates affected packages and applies the owner-approved exception only for CVE-2026-93687. All other audit controls remain active. See `docs/DEPENDENCY_AUDIT.md`. PR #20 previously merged the Hawar RSS expansion and CI install fix as `3fba958`.
 
+PR #21 merged after refreshed CI run `38274509841` and public RSS verification run `38274509842` both passed. The squash merge on `main` is `7c0560ddeda985e7f17a975ca0289f68153cfe00`. This release check does not verify a subsequent Pages deployment.
+
 Design: `docs/superpowers/specs/2026-10-02-case-grouping-suggestions-design.md`. Plan: `docs/superpowers/plans/2026-10-02-case-grouping-suggestions.md`.
+
+## RSS refresh composition test repair — 2026-10-14
+
+Scheduled runs `38429197837` and `38470580706` passed live feed verification, collection, and public-wire validation, then failed the home-page composition test. Its singular query for “Unverified external reporting” was incompatible with the combined reporting hub, which correctly repeats this disclosure on each RSS card. The repaired test uses synthetic empty and two-headline RSS wires and an empty Telegram mock, and checks the section and individual card disclosures. The populated case reproduced the original failure before the assertion fix. Local verification: 154 JavaScript tests, lint, typecheck, and the public build pass. No production UI, source configuration, or workflow gate changes are required. PR CI and a refreshed scheduled deployment must still verify the release.
 
 ## Next work
 
-Refresh PR #21 checks with the approved one-CVE exception, then merge only if all checks pass. General incident correction/withdrawal, retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
+Repair the RSS refresh composition test, then design general incident correction/withdrawal as the next feature slice. Retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
 
 Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
 Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.
