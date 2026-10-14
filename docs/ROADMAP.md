@@ -47,8 +47,6 @@ Implemented scope:
 - validated metadata-only Pages refresh every 30 minutes;
 - Python 3.14 runtime and security checks.
 
-## Current
-
 ### Milestone 4 — Source expansion and Telegram intake
 
 Goal: make the public source wire materially more useful and add terms-compliant, local-only collection for approved public Telegram channels.
@@ -67,11 +65,13 @@ Channel approval authorizes collection only. Every public Telegram item requires
 
 Approved design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-design.md`.
 
-## Next
+## Current
 
 ### Milestone 5 — Discovery and hardening
 
-Candidate-source review, grouping suggestions, correction/withdrawal tooling, retention jobs, backup documentation, and threat-model review.
+Completed: private candidate-source review and private case grouping suggestions.
+
+Remaining: general incident correction/withdrawal tooling, retention jobs, backup documentation, and threat-model review.
 
 ## Explicitly out of scope
 
