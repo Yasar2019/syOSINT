@@ -55,12 +55,16 @@ def build_public_record(db: Session, incident: Incident) -> dict:
         "uncertainty": {"en": fields["uncertainty_en"], "ar": fields["uncertainty_ar"]},
         "sourceCount": len(sources), "sources": sources, "corrections": [],
     }
+    validate_public_record(record)
+    return record
+
+
+def validate_public_record(record: dict) -> None:
     schema = json.loads(SCHEMA.read_text())
     dataset = {"schemaVersion": "1.0.0", "generatedAt": record["updatedAt"], "synthetic": False, "incidents": [record]}
     errors = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(dataset))
     if errors:
         raise HTTPException(409, "Public schema validation failed: " + errors[0].message)
-    return record
 
 
 def write_export(directory: Path, record: dict) -> Path:

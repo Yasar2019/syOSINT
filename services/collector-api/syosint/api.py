@@ -3,7 +3,7 @@ import ipaddress
 import os
 from threading import Lock
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -19,10 +19,12 @@ from .candidate_review import (
     CandidateConflict, CandidateNotFound, candidate_response, review_response,
     normalize_candidate_url, create_candidate, review_candidate,
 )
-from .db import database, record
+from .db import database, digest, record
+from . import incident_publication as ip
 from .export import build_public_record, write_export
 from .models import (
     Audit,
+    IncidentPublication, IncidentCorrectionDraft, IncidentWithdrawalPreview,
     SourceCandidate,
     CandidateReview,
     Evidence,
@@ -277,6 +279,34 @@ class TransitionInput(Strict):
 
 class ExportInput(Strict):
     acknowledged: bool
+
+
+class RevisionReasonInput(Strict):
+    expected_version: int = Field(strict=True, gt=0)
+    reason_en: str = Field(max_length=1000)
+    reason_ar: str = Field(max_length=1000)
+
+    @field_validator('reason_en', 'reason_ar')
+    @classmethod
+    def reason(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError('Reason is required')
+        return value
+
+
+class CorrectionInput(RevisionReasonInput):
+    fields: IncidentEdit
+
+
+class CorrectionReviewInput(ReviewInput):
+    expected_version: int = Field(strict=True, gt=0)
+
+
+class RevisionApprovalInput(Strict):
+    expected_version: int = Field(strict=True, gt=0)
+    preview_hash: str = Field(min_length=64, max_length=64)
+    acknowledged: StrictBool
 
 
 def create_app(database_url: str, export_dir: Path) -> FastAPI:
@@ -921,20 +951,135 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         incident = db.get(Incident, incident_id)
         if not incident:
             raise HTTPException(404, "Incident not found")
-        return build_public_record(db, incident)
+        publication = db.get(IncidentPublication, incident_id)
+        return publication.record if publication else build_public_record(db, incident)
 
     @app.post("/incidents/{incident_id}/export")
     def export(incident_id: int, item: ExportInput, db: Session = Depends(session)):
         if not item.acknowledged:
             raise HTTPException(409, "Explicit export acknowledgment required")
-        incident = db.get(Incident, incident_id)
-        if not incident:
-            raise HTTPException(404, "Incident not found")
-        public = build_public_record(db, incident)
-        write_export(export_dir, public)
-        record(db, "incident.exported", "incident", incident.id, after=public, reason="Explicit analyst export")
-        db.commit()
-        return {"record": public}
+        with publication_lock:
+            incident = ip.require_incident(db, incident_id)
+            publication = db.get(IncidentPublication, incident_id)
+            if publication is None:
+                publication = ip.append(db, incident_id, build_public_record(db, incident), 'published')
+                db.commit()
+            public = publication.record
+            try:
+                write_export(export_dir, public)
+            except OSError:
+                try:
+                    (export_dir / f"incident-{incident_id}.json").unlink(missing_ok=True)
+                except OSError:
+                    pass
+                raise HTTPException(503, 'Pending incident export unavailable; retry explicit export') from None
+            record(db, "incident.exported", "incident", incident.id, after=public, reason="Explicit analyst export")
+            db.commit()
+            return {"record": public}
+
+    def invalidate_incident_export(incident_id):
+        try:
+            (export_dir / f"incident-{incident_id}.json").unlink(missing_ok=True)
+        except OSError:
+            raise HTTPException(503, 'Approved revision retained; pending export cleanup unavailable, retry explicit export') from None
+
+    @app.get('/incidents/{incident_id}/publication')
+    def incident_publication(incident_id: int, db: Session = Depends(session)):
+        return ip.publication_response(db, incident_id)
+
+    @app.put('/incidents/{incident_id}/correction')
+    def correction(incident_id: int, item: CorrectionInput, db: Session = Depends(session)):
+        with publication_lock:
+            publication = ip.active(db, incident_id, item.expected_version)
+            incident = ip.require_incident(db, incident_id)
+            fields = item.fields.model_dump(mode='json', exclude_none=True)
+            if 'latitude' in fields or 'longitude' in fields:
+                raise HTTPException(422, 'Exact coordinates cannot enter public export')
+            # Classify only the sanitized projection, even before renewed review.
+            projected = ip.submitted_projection(publication.record, fields)
+            if not ip.changed_fields(publication.record, projected):
+                raise HTTPException(409, 'Correction requires a public change')
+            draft = db.get(IncidentCorrectionDraft, incident_id)
+            before = draft.fields if draft else None
+            if draft is None:
+                draft = IncidentCorrectionDraft(incident_id=incident_id)
+                db.add(draft)
+            draft.base_version = publication.version
+            draft.fields, draft.review = fields, {}
+            draft.reason_en, draft.reason_ar = item.reason_en, item.reason_ar
+            draft.updated_at = now()
+            ip.clear_previews(db, incident_id)
+            record(db, 'incident.correction.edited', 'incident', incident_id, before=before, after=dict(fields=fields,reason_en=item.reason_en,reason_ar=item.reason_ar))
+            db.commit()
+            return ip.publication_response(db, incident_id)['draft']
+
+    @app.post('/incidents/{incident_id}/correction/review')
+    def correction_review(incident_id: int, item: CorrectionReviewInput, db: Session = Depends(session)):
+        with publication_lock:
+            ip.active(db, incident_id, item.expected_version)
+            draft = db.get(IncidentCorrectionDraft, incident_id)
+            if draft is None or draft.base_version != item.expected_version:
+                raise HTTPException(409, 'Matching correction draft unavailable')
+            before = draft.review
+            draft.review = item.model_dump(exclude={'expected_version'})
+            draft.updated_at = now()
+            ip.clear_previews(db, incident_id)
+            record(db, 'incident.correction.reviewed', 'incident', incident_id, before=before, after=draft.review)
+            db.commit()
+            return {'review': draft.review}
+
+    @app.get('/incidents/{incident_id}/correction/preview')
+    def correction_preview(incident_id: int, db: Session = Depends(session)):
+        ip.require_incident(db, incident_id)
+        return ip.correction_preview(db, incident_id)
+
+    @app.post('/incidents/{incident_id}/correction/approve')
+    def correction_approve(incident_id: int, item: RevisionApprovalInput, db: Session = Depends(session)):
+        with publication_lock:
+            ip.active(db, incident_id, item.expected_version)
+            preview = ip.correction_preview(db, incident_id)
+            if not item.acknowledged or preview['preview_hash'] != item.preview_hash:
+                raise HTTPException(409, 'Exact preview acknowledgment required')
+            draft = db.get(IncidentCorrectionDraft, incident_id)
+            incident = ip.require_incident(db, incident_id)
+            ip.append(db, incident_id, preview['record'], 'corrected', draft.reason_en, draft.reason_ar)
+            incident.fields, incident.review, incident.updated_at = draft.fields, draft.review, draft.updated_at
+            ip.clear_previews(db, incident_id, draft=True)
+            db.commit()
+            invalidate_incident_export(incident_id)
+            return ip.publication_response(db, incident_id)
+
+    @app.post('/incidents/{incident_id}/withdrawal/preview')
+    def withdrawal_preview(incident_id: int, item: RevisionReasonInput, db: Session = Depends(session)):
+        with publication_lock:
+            publication = ip.active(db, incident_id, item.expected_version)
+            public = ip.tombstone(publication, item.reason_en, item.reason_ar)
+            preview = db.get(IncidentWithdrawalPreview, incident_id)
+            if preview is None:
+                preview = IncidentWithdrawalPreview(incident_id=incident_id)
+                db.add(preview)
+            preview.base_version, preview.record, preview.preview_hash = publication.version, public, digest(public)
+            preview.reason_en, preview.reason_ar = item.reason_en, item.reason_ar
+            preview.expires_at = now() + timedelta(minutes=15)
+            record(db, 'incident.withdrawal.previewed', 'incident', incident_id, after=public)
+            db.commit()
+            return dict(record=public, preview_hash=preview.preview_hash, version=publication.version)
+
+    @app.post('/incidents/{incident_id}/withdrawal/approve')
+    def withdrawal_approve(incident_id: int, item: RevisionApprovalInput, db: Session = Depends(session)):
+        with publication_lock:
+            ip.active(db, incident_id, item.expected_version)
+            preview = db.get(IncidentWithdrawalPreview, incident_id)
+            if preview is None or preview.base_version != item.expected_version or preview.expires_at.replace(tzinfo=UTC) <= now() or not item.acknowledged or preview.preview_hash != item.preview_hash or digest(preview.record) != item.preview_hash:
+                raise HTTPException(409, 'Unexpired exact preview acknowledgment required')
+            ip.append(db, incident_id, preview.record, 'withdrawn', preview.reason_en, preview.reason_ar)
+            incident = ip.require_incident(db, incident_id)
+            incident.state = 'withdrawn'
+            incident.updated_at = now()
+            ip.clear_previews(db, incident_id, draft=True)
+            db.commit()
+            invalidate_incident_export(incident_id)
+            return ip.publication_response(db, incident_id)
 
     @app.post("/incidents/{incident_id}/evidence", status_code=201)
     def add_evidence(incident_id: int, item: EvidenceInput, db: Session = Depends(session)):
