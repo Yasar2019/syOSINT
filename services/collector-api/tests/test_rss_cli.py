@@ -90,7 +90,7 @@ def test_public_allowlist_is_balanced_and_reviewed():
     assert not any(source.id.startswith("european-parliament-") for source in enabled)
     assert "global-affairs-canada" in {source.id for source in enabled}
     assert {
-        "enab-baladi-english", "north-press-english", "north-press-arabic",
+        "north-press-english", "north-press-arabic",
     } <= {source.id for source in enabled}
     assert all(source.attribution for source in enabled)
     assert all(source.attribution_url for source in enabled)
@@ -99,6 +99,16 @@ def test_public_allowlist_is_balanced_and_reviewed():
     assert all("topicMode" in source for source in configured["sources"] if source["enabled"])
     review = (REPOSITORY / "docs/source-policy/RSS-SOURCE-REVIEWS.md").read_text()
     assert all(source.id in review for source in enabled)
+
+
+def test_blocked_enab_feed_is_disabled_with_review_metadata_preserved():
+    sources = _load_sources(REPOSITORY / "config/rss-sources.json")
+    blocked = next(source for source in sources if source.id == "enab-baladi-english")
+
+    assert blocked.enabled is False
+    assert blocked.feed_url == "https://english.enabbaladi.net/feed/"
+    assert blocked.attribution == "Enab Baladi — original headlines and links"
+    assert blocked.attribution_url == "https://english.enabbaladi.net/about-us/"
 
 
 def test_keyword_mode_requires_terms(tmp_path):

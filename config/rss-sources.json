@@ -24,7 +24,7 @@
       "id": "enab-baladi-english",
       "label": { "en": "Enab Baladi — English", "ar": "عنب بلدي — الإنجليزية" },
       "feedUrl": "https://english.enabbaladi.net/feed/", "homepageUrl": "https://english.enabbaladi.net/",
-      "language": "en", "enabled": true, "topicMode": "keyword-filtered",
+      "language": "en", "enabled": false, "topicMode": "keyword-filtered",
       "requiredTerms": ["Syria", "Syrian", "Damascus", "Aleppo", "Idlib", "Daraa", "Homs", "Raqqa", "Hasakah", "Quneitra"], "excludedTerms": [],
       "attribution": "Enab Baladi — original headlines and links",
       "attributionUrl": "https://english.enabbaladi.net/about-us/"
