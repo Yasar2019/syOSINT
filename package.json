@@ -22,12 +22,14 @@
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
     "secretlint": "^13.0.7",
     "typescript": "^5.9.2",
-    "vitest": "^4.1.11"
+    "vite": "7.3.7",
+    "vitest": "^4.1.12"
   },
   "pnpm": {
     "overrides": {
       "source-map-js": "1.2.2",
-      "sharp": "0.35.5"
+      "sharp": "0.35.5",
+      "vite": "7.3.7"
     },
     "auditConfig": {
       "ignoreCves": [

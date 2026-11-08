@@ -85,7 +85,7 @@ export const ar = {
     withdrawn: "مسحوب",
   },
   summary: {
-    total: "الحوادث الظاهرة",
+    total: "الحوادث النشطة",
     verified: "مؤكدة أو متحققة",
     needsAttention: "متنازع عليها أو غير متحققة",
   },
@@ -94,7 +94,9 @@ export const ar = {
     empty: "لا توجد حوادث تطابق عوامل التصفية الحالية.",
     viewDetails: "عرض التفاصيل",
   },
+  changedFields: { title: "العنوان", summary: "الملخص", uncertainty: "الشكوك", location: "الموقع", occurredAt: "وقت الحدث", confidence: "الثقة", categories: "الفئات", sources: "المصادر", sourceCount: "عدد المصادر", status: "الحالة" },
   detail: {
+    withdrawnTitle: "تقرير مسحوب", changedFields: "الحقول المعدلة", otherField: "حقل عام آخر",
     title: "تفاصيل الحادثة",
     close: "إغلاق التفاصيل",
     occurred: "وقت الحدوث",

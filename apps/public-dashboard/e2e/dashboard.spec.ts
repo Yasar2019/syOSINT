@@ -83,3 +83,19 @@ test("contains no runtime calls to paid or external map services", async ({ page
   await expect(page.getByRole("region", { name: /syria situation map/i })).toBeVisible();
   expect(externalRequests).toEqual([]);
 });
+
+test('shows a withdrawal notice without its former claim or links in both languages', async ({ page }) => {
+  await page.goto('/');
+  const card = page.getByTestId('incident-card').filter({ hasText: 'Synthetic report withdrawn after reassessment.' });
+  await expect(card).toHaveCount(1);
+  await expect(card).toContainText('Withdrawn report');
+  await expect(page.getByText('[DEMO] Disputed political statement exercise', {exact:true})).toHaveCount(0);
+  await card.getByRole('button').click();
+  const detail = page.locator('.incident-detail');
+  await expect(detail).toContainText('Synthetic report withdrawn after reassessment.');
+  await expect(detail.locator('a[href*="demo-source-e"]')).toHaveCount(0);
+  await expect(detail.getByText('Disputed', {exact:true})).toHaveCount(0);
+  await detail.getByRole('button', {name:/close/i}).click();
+  await page.getByRole('button', {name:'العربية'}).click();
+  await expect(page.getByTestId('incident-card').filter({hasText:'سُحب التقرير التجريبي بعد إعادة التقييم.'})).toContainText('تقرير مسحوب');
+});

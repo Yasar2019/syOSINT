@@ -14,7 +14,9 @@ Before enabling a public feed, a reviewer must confirm:
 - the feed parses as RSS 2.0 or Atom within the collector's byte and item limits; and
 - broad feeds have deterministic Syria terms that are narrow enough for the public wire.
 
-The current reviewed pool contains eleven enabled feeds: SyriaUntold English and Arabic, Enab Baladi English, North Press English and Arabic, Hawar News Agency English and Arabic, GOV.UK Syria news, Global Affairs Canada, European Commission Press Corner, and Council of the EU press releases. The exact endpoints, topic terms, legal evidence, attribution links, rejected candidates, and dated decisions are recorded in [RSS-SOURCE-REVIEWS.md](RSS-SOURCE-REVIEWS.md). syOSINT republishes no article body, description, image, or publisher branding. Each headline preserves its publisher label and canonical link, while each source state exposes the reviewed attribution link; ownership remains with the publisher.
+The current reviewed pool contains ten enabled feeds: SyriaUntold English and Arabic, North Press English and Arabic, Hawar News Agency English and Arabic, GOV.UK Syria news, Global Affairs Canada, European Commission Press Corner, and Council of the EU press releases. The exact endpoints, topic terms, legal evidence, attribution links, rejected candidates, and dated decisions are recorded in [RSS-SOURCE-REVIEWS.md](RSS-SOURCE-REVIEWS.md). syOSINT republishes no article body, description, image, or publisher branding. Each headline preserves its publisher label and canonical link, while each source state exposes the reviewed attribution link; ownership remains with the publisher.
+
+Enab Baladi English is retained as a disabled entry after repeated HTTP 403 responses from GitHub Actions on 2026-10-16; re-enabling requires a successful live check and repository review.
 
 To disable a problematic source without losing review history, set `enabled` to `false` and commit the reason. Remove an entry only when its identifier will not be reused. Never silently substitute an unreviewed feed after an endpoint failure.
 

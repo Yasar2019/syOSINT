@@ -43,11 +43,11 @@ describe("filterIncidents", () => {
 
   it("counts every confidence label without dropping zero-value labels", () => {
     expect(countByConfidence(incidents)).toEqual({
-      unverified: 1,
+      unverified: 2,
       developing: 1,
       corroborated: 1,
       verified: 1,
-      disputed: 1,
+      disputed: 0,
       false: 1,
     });
   });

@@ -4,8 +4,8 @@
 **Repository:** `Yasar2019/syOSINT`  
 **Release branch:** `main` (PR #21 merged as `7c0560d`)
 **Last completed milestone:** Milestone 5 — private candidate-source review and case grouping suggestions
-**Current milestone:** Milestone 5 — correction/withdrawal design; RSS refresh test repair
-**Source of truth updated:** 2026-10-14
+**Current milestone:** Milestone 5 — incident corrections and withdrawals (PR #23)
+**Source of truth updated:** 2026-11-07
 
 ## Current release state
 
@@ -36,7 +36,7 @@ Milestone 3 adds:
 - a bilingual public Live News Wire with source/language filters and stale states;
 - `.github/workflows/rss-wire.yml`, scheduled every 30 minutes with manual dispatch.
 
-Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. The current allowlist has eleven reviewed English and Arabic feeds, including North Press, Enab Baladi English, and Hawar News Agency English and Arabic. The dated official evidence and deferred candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
+Collector, API, analyst-desk, schema, and public-dashboard tests cover the implementation with synthetic fixtures. The scheduled workflow is deployed through GitHub Pages. The current allowlist has ten enabled reviewed English and Arabic feeds, including North Press and Hawar News Agency English and Arabic. Enab Baladi English remains configured but disabled after repeated HTTP 403 responses on 2026-10-16. The dated official evidence and deferred candidates are in `docs/source-policy/RSS-SOURCE-REVIEWS.md`.
 
 The public wire retains seven days of headlines, capped at 100 per source and 500 globally. Both Pages workflows run a shared fail-closed live gate before collection. Safe logs contain one bounded status line per source and the GitHub summary contains aggregate configured/healthy/delayed/item counts only. A gate, collection, schema, test, or build failure leaves the previous Pages artifact in place. Recovery is to inspect the safe category, rerun after a transient outage, or disable and re-review a permanently changed source; the gate must not be bypassed.
 
@@ -64,9 +64,17 @@ Design: `docs/superpowers/specs/2026-10-02-case-grouping-suggestions-design.md`.
 
 Scheduled runs `38429197837` and `38470580706` passed live feed verification, collection, and public-wire validation, then failed the home-page composition test. Its singular query for “Unverified external reporting” was incompatible with the combined reporting hub, which correctly repeats this disclosure on each RSS card. The repaired test uses synthetic empty and two-headline RSS wires and an empty Telegram mock, and checks the section and individual card disclosures. The populated case reproduced the original failure before the assertion fix. Local verification: 154 JavaScript tests, lint, typecheck, and the public build pass. No production UI, source configuration, or workflow gate changes are required. PR CI and a refreshed scheduled deployment must still verify the release.
 
+## RSS HTTP 403 recovery — 2026-10-16
+
+The latest scheduled run `38910738689` failed in the live source gate because Enab Baladi English returned HTTP 403; all ten other enabled feeds passed. Run `38876422288` had the same result. Disable only `enab-baladi-english` using the existing operations policy, preserve its endpoint and attribution, and retain both strict Pages gates. No access-control workaround or replacement feed is introduced. This repair is separate from open PR #23 (`feat/incident-revisions`). Regression coverage checks the disabled source and preserved review metadata. Local verification and PR/live-check results are recorded before handoff.
+
+## Incident revisions — PR #23
+
+Design and plan: `docs/superpowers/specs/2026-10-14-incident-revisions-design.md` and `docs/superpowers/plans/2026-10-14-incident-revisions.md`. Snapshot version, private draft and immutable history preserve the original incident ID. Each correction requires renewed safety review and approval of the exact preview; withdrawal uses a generic notice without old claim/source/location details and is excluded from active counts, map and timeline. Approval and export remain local; public staging is a separate reviewed merge by ID. Operations: `docs/source-policy/INCIDENT-PUBLICATION.md`. The RSS recovery from PR #24 is merged into this branch.
+
 ## Next work
 
-Repair the RSS refresh composition test, then design general incident correction/withdrawal as the next feature slice. Retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
+Finish verification and release PR #23 for incident corrections and withdrawals. Backend migration 0007 and versioned snapshot API are complete; the private analyst correction/review/preview/approval and withdrawal controls, public tombstone rendering, and operations documentation are implemented. Browser acceptance covers initial export, stable-ID correction, terminal withdrawal, and explicit re-export with synthetic content. Local API baseline: 321 tests pass on Python 3.14.9. Final JavaScript, dependency, build, browser and CI evidence belongs in PR #23 before release. Retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
 
 Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
 Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.
