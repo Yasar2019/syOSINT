@@ -48,7 +48,9 @@ export function isMarkerEligible(incident: PublicIncident): boolean {
   const { latitude, longitude, precision } = incident.location;
 
   return (
+    incident.status !== "withdrawn" &&
     (precision === "governorate" || precision === "district") &&
+    Number.isFinite(latitude) && Number.isFinite(longitude) &&
     latitude !== undefined &&
     longitude !== undefined &&
     latitude >= SYRIA_BOUNDS.minimumLatitude &&

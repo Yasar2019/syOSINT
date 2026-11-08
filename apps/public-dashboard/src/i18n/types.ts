@@ -93,6 +93,18 @@ export interface Dictionary {
     otherField: string;
   };
   map: {
+    controls: string;
+    style: string;
+    dark: string;
+    streets: string;
+    zoomIn: string;
+    zoomOut: string;
+    reset: string;
+    loading: string;
+    unavailable: string;
+    interaction: string;
+    retry: string;
+
     title: string;
     description: string;
     noLocation: string;

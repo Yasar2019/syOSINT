@@ -15,6 +15,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4173",
     reducedMotion: "reduce",
+    launchOptions: { args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] },
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

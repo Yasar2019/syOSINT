@@ -105,3 +105,9 @@ This file records project decisions that future agents must preserve unless the 
 **Reason:** Channel-level trust cannot make every post safe, accurate, lawful, or suitable for public redistribution. A per-item gate provides public Telegram awareness without exposing raw post text, media, private data, or tactical detail.
 
 **Consequence:** Public Telegram records live in a separate versioned wire and are labeled as reviewed external reports that are not independently verified. They contain source attribution, a permanent public link, timestamps, and human-written bilingual headlines only. Source edits and deletions create a correction or withdrawal review and never silently rewrite public history. Telegram-derived material remains excluded from all AI/ML processing.
+
+## ADR-014 — Free detailed basemap with local fallback
+
+**Decision:** Use MapLibre GL JS with OpenFreeMap public dark/street styles for the owner-requested detailed map. Keep the bundled SVG overview and accessible location list for WebGL/network failure. No keys, accounts or billing.
+
+**Consequence:** Geography comes from the provider and requires visible attribution; public-service availability has no SLA. Marker eligibility stays restricted to existing approved generalized public coordinates; no automatic geocoding, source-text processing or new intelligence layers. See `docs/source-policy/MAP.md`.

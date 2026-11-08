@@ -4,7 +4,7 @@
 **Repository:** `Yasar2019/syOSINT`  
 **Release branch:** `main` (PR #21 merged as `7c0560d`)
 **Last completed milestone:** Milestone 5 — private candidate-source review and case grouping suggestions
-**Current milestone:** Milestone 5 — incident corrections and withdrawals (PR #23)
+**Current milestone:** Owner-requested detailed map upgrade after incident revision release
 **Source of truth updated:** 2026-11-07
 
 ## Current release state
@@ -71,6 +71,10 @@ The latest scheduled run `38910738689` failed in the live source gate because En
 ## Incident revisions — PR #23
 
 Design and plan: `docs/superpowers/specs/2026-10-14-incident-revisions-design.md` and `docs/superpowers/plans/2026-10-14-incident-revisions.md`. Snapshot version, private draft and immutable history preserve the original incident ID. Each correction requires renewed safety review and approval of the exact preview; withdrawal uses a generic notice without old claim/source/location details and is excluded from active counts, map and timeline. Approval and export remain local; public staging is a separate reviewed merge by ID. Operations: `docs/source-policy/INCIDENT-PUBLICATION.md`. The RSS recovery from PR #24 is merged into this branch.
+
+## Detailed map upgrade — 2026-11-07
+
+The owner requested a more detailed map like WorldMonitor using free tools. The map uses MapLibre GL JS with free keyless OpenFreeMap dark/street styles, zoom/reset controls and responsive resizing. The existing bundled overview and location list remain available for WebGL/network failure. Generalized public marker restrictions and withdrawal exclusions are preserved. Provider/license/availability and acceptance scope are documented in `docs/source-policy/MAP.md`; release evidence is recorded in the detailed-map PR. Incident revision PR #23 is merged as `1449009` with CI and public deployment verified.
 
 ## Next work
 

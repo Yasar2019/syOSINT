@@ -99,3 +99,39 @@ test('shows a withdrawal notice without its former claim or links in both langua
   await page.getByRole('button', {name:'العربية'}).click();
   await expect(page.getByTestId('incident-card').filter({hasText:'سُحب التقرير التجريبي بعد إعادة التقييم.'})).toContainText('تقرير مسحوب');
 });
+
+test('keeps the bundled map usable without WebGL and localizes its controls', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'WebGL2RenderingContext', { value: undefined, configurable: true }));
+  await page.goto('/');
+  const map = page.locator('.situation-map');
+  await expect(map.getByText('Detailed map unavailable. Showing the offline overview.')).toBeVisible();
+  await expect(map.locator('svg')).toBeVisible();
+  await expect(map.getByRole('button', { name: 'Zoom in', exact: true })).toBeDisabled();
+  await expect(map.locator('.map-location-list button').first()).toBeVisible();
+  await map.locator('.map-location-list button').first().click();
+  await expect(page.locator('.incident-detail')).toBeVisible();
+  await page.locator('.incident-detail').getByRole('button',{name:'Close details',exact:true}).click();
+  await page.getByRole('button', {name:'العربية'}).click();
+  await expect(map.getByLabel('خريطة الأساس')).toBeVisible();
+  await expect(map.getByRole('button', {name:'إعادة تحميل الخريطة التفصيلية'})).toBeVisible();
+});
+
+test('renders the real vector engine, switches basemap and opens a mapped incident', async ({ page }) => {
+  // Deterministic style: exercises real WebGL/worker/camera/DOM markers without relying on a tile service in CI.
+  await page.route('https://tiles.openfreemap.org/styles/**', route => route.fulfill({ json: { version: 8, sources: {}, layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#101c27' } }] } }));
+  await page.goto('/');
+  const map = page.locator('.situation-map');
+  await expect(map.locator('.detailed-map')).toHaveAttribute('data-map-status', 'ready', {timeout:20000});
+  await expect(map.locator('.vector-map-host canvas')).toBeVisible();
+  const marker = map.locator('.detailed-map-marker').first();
+  await expect(marker).toBeVisible();
+  await marker.click();
+  await expect(page.locator('.incident-detail')).toBeVisible();
+  await page.locator('.incident-detail').getByRole('button',{name:'Close details',exact:true}).click();
+  await map.getByRole('button',{name:'Zoom in',exact:true}).click();
+  await map.getByLabel('Basemap').selectOption('streets');
+  await expect(map.locator('.detailed-map')).toHaveAttribute('data-map-status','ready');
+  await expect(map.locator('.detailed-map-marker').first()).toBeVisible();
+  await map.getByRole('button',{name:'Reset to Syria',exact:true}).click();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth)).toBe(false);
+});

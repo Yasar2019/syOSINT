@@ -1,0 +1,9 @@
+# Detailed Syria map
+
+The owner requests a more detailed map like worldmonitor.app and authorizes free tools/frameworks. Implementation choice: MapLibre GL JS (BSD-3-Clause) plus OpenFreeMap public vector styles (OpenStreetMap/OpenMapTiles attribution). No account, API key or paid service. OpenFreeMap currently advertises unrestricted public map views, including commercial usage; its public service has no SLA.
+
+Replace the coarse SVG-only presentation with a dark navigable vector basemap, streets alternative, zoom and Syria reset controls, resize handling and clickable keyboard-accessible approved incident markers. Retain the bundled SVG as the offline/WebGL fallback and retain the accessible location list. Cities, roads, borders and geographic features come from the provider; existing generalized public incident coordinates are never enriched, geocoded or inferred. Withdrawn/withheld/outside-bounds/nonfinite coordinates never become markers. Provider tile requests are for the viewport only; do not send report text or coordinates as API parameters.
+
+MapLibre alone is appropriate for current incident volume. WorldMonitor also uses deck.gl for large overlay sets; adding that now adds weight without useful functionality. Leaflet raster maps were considered but vector styling and smooth detailed zoom align better with the reference. Self-hosted tiles would add storage/operations cost; use the free public endpoint with attribution and graceful fallback. No satellite, terrain elevation, live military layers or additional report ingestion in this change.
+
+Controls and status are English/Arabic, responsive, no continuous animation, normal page scrolling is preserved unless the user interacts with the map. Lazy-load the WebGL code on client, constrain pixel ratio, cancel async initialization on unmount, remove listeners/map/markers. A failed tile/style load must provide a visible status and working overview/list.
