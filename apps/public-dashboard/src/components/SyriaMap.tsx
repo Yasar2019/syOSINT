@@ -21,6 +21,7 @@ export function SyriaMap({
   dictionary: Dictionary;
   onSelect: (id: string) => void;
 }) {
+  incidents = incidents.filter((item) => item.status !== "withdrawn");
   const projection = createSyriaProjection(WIDTH, HEIGHT);
   const countryPath = geoPath(projection)(getSyriaFeature()) ?? "";
   const markers = incidents.flatMap((incident) => {

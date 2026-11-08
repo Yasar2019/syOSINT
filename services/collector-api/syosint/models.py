@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     Boolean,
     DateTime,
     ForeignKey,
@@ -247,3 +248,46 @@ class CandidateReview(Base):
     reason: Mapped[str] = mapped_column(String(1000))
     checks: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class IncidentPublication(Base):
+    __tablename__ = 'incident_publications'
+    __table_args__ = ( CheckConstraint('version >= 1'), )
+    incident_id: Mapped[int] = mapped_column(ForeignKey('incidents.id'), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer)
+    record: Mapped[dict] = mapped_column(JSON)
+
+
+class IncidentPublicationRevision(Base):
+    __tablename__ = 'incident_publication_revisions'
+    __table_args__ = (UniqueConstraint('incident_id', 'version'), CheckConstraint('version >= 1'))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    incident_id: Mapped[int] = mapped_column(ForeignKey('incidents.id'))
+    version: Mapped[int] = mapped_column(Integer)
+    record: Mapped[dict] = mapped_column(JSON)
+    action: Mapped[str] = mapped_column(String(20))
+    reason_en: Mapped[str] = mapped_column(Text)
+    reason_ar: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class IncidentCorrectionDraft(Base):
+    __tablename__ = 'incident_correction_drafts'
+    incident_id: Mapped[int] = mapped_column(ForeignKey('incidents.id'), primary_key=True)
+    base_version: Mapped[int] = mapped_column(Integer)
+    fields: Mapped[dict] = mapped_column(JSON)
+    review: Mapped[dict] = mapped_column(JSON)
+    reason_en: Mapped[str] = mapped_column(Text)
+    reason_ar: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class IncidentWithdrawalPreview(Base):
+    __tablename__ = 'incident_withdrawal_previews'
+    incident_id: Mapped[int] = mapped_column(ForeignKey('incidents.id'), primary_key=True)
+    base_version: Mapped[int] = mapped_column(Integer)
+    preview_hash: Mapped[str] = mapped_column(String(64))
+    record: Mapped[dict] = mapped_column(JSON)
+    reason_en: Mapped[str] = mapped_column(Text)
+    reason_ar: Mapped[str] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

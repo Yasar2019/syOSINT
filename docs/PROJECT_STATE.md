@@ -4,8 +4,8 @@
 **Repository:** `Yasar2019/syOSINT`  
 **Release branch:** `main` (PR #21 merged as `7c0560d`)
 **Last completed milestone:** Milestone 5 — private candidate-source review and case grouping suggestions
-**Current milestone:** Milestone 5 — correction/withdrawal design; RSS refresh test repair
-**Source of truth updated:** 2026-10-16
+**Current milestone:** Milestone 5 — incident corrections and withdrawals (PR #23)
+**Source of truth updated:** 2026-11-07
 
 ## Current release state
 
@@ -68,9 +68,13 @@ Scheduled runs `38429197837` and `38470580706` passed live feed verification, co
 
 The latest scheduled run `38910738689` failed in the live source gate because Enab Baladi English returned HTTP 403; all ten other enabled feeds passed. Run `38876422288` had the same result. Disable only `enab-baladi-english` using the existing operations policy, preserve its endpoint and attribution, and retain both strict Pages gates. No access-control workaround or replacement feed is introduced. This repair is separate from open PR #23 (`feat/incident-revisions`). Regression coverage checks the disabled source and preserved review metadata. Local verification and PR/live-check results are recorded before handoff.
 
+## Incident revisions — PR #23
+
+Design and plan: `docs/superpowers/specs/2026-10-14-incident-revisions-design.md` and `docs/superpowers/plans/2026-10-14-incident-revisions.md`. Snapshot version, private draft and immutable history preserve the original incident ID. Each correction requires renewed safety review and approval of the exact preview; withdrawal uses a generic notice without old claim/source/location details and is excluded from active counts, map and timeline. Approval and export remain local; public staging is a separate reviewed merge by ID. Operations: `docs/source-policy/INCIDENT-PUBLICATION.md`. The RSS recovery from PR #24 is merged into this branch.
+
 ## Next work
 
-Repair the RSS refresh composition test, then design general incident correction/withdrawal as the next feature slice. Retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
+Finish verification and release PR #23 for incident corrections and withdrawals. Backend migration 0007 and versioned snapshot API are complete; the private analyst correction/review/preview/approval and withdrawal controls, public tombstone rendering, and operations documentation are implemented. Browser acceptance covers initial export, stable-ID correction, terminal withdrawal, and explicit re-export with synthetic content. Local API baseline: 321 tests pass on Python 3.14.9. Final JavaScript, dependency, build, browser and CI evidence belongs in PR #23 before release. Retention jobs, backup documentation, and threat-model review remain subsequent roadmap items. Never place credentials or raw posts in the repository.
 
 Candidate review design: `docs/superpowers/specs/2026-09-29-candidate-source-review-design.md`.
 Candidate review plan: `docs/superpowers/plans/2026-09-30-candidate-source-review.md`.

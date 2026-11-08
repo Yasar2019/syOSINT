@@ -8,6 +8,7 @@ export function SummaryCards({
   incidents: PublicIncident[];
   dictionary: Dictionary;
 }) {
+  incidents = incidents.filter((item) => item.status !== "withdrawn");
   const verified = incidents.filter((item) =>
     ["corroborated", "verified"].includes(item.confidence),
   ).length;

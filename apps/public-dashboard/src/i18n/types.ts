@@ -78,6 +78,7 @@ export interface Dictionary {
     empty: string;
     viewDetails: string;
   };
+  changedFields: Record<string, string>;
   detail: {
     title: string;
     close: string;
@@ -87,6 +88,9 @@ export interface Dictionary {
     uncertainty: string;
     corrections: string;
     noCorrections: string;
+    withdrawnTitle: string;
+    changedFields: string;
+    otherField: string;
   };
   map: {
     title: string;

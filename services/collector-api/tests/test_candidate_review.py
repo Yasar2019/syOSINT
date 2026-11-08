@@ -36,7 +36,7 @@ def test_create_list_detail_restart_and_private_audit(client, tmp_path):
     assert client.get('/candidates').json() == [candidate]
     assert client.get(f"/candidates/{candidate['id']}").json() == {**candidate, 'reviews': []}
     with sqlite3.connect(tmp_path / 'vault.sqlite') as db:
-        assert db.execute('select version_num from alembic_version').fetchone() == ('0006',)
+        assert db.execute('select version_num from alembic_version').fetchone() == ('0007',)
     restarted = TestClient(create_app(f"sqlite:///{tmp_path / 'vault.sqlite'}", tmp_path / 'exports'), base_url='http://127.0.0.1:8765')
     assert restarted.get('/candidates').json() == [candidate]
     audit = restarted.get('/audit').json()

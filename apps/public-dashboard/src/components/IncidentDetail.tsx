@@ -13,6 +13,15 @@ export function IncidentDetail({
   dictionary: Dictionary;
   onClose: () => void;
 }) {
+  if (incident.status === "withdrawn") {
+    const notice = incident.corrections.at(-1);
+    return <aside className="incident-detail" aria-labelledby="incident-detail-title">
+      <strong>{dictionary.status.withdrawn}</strong><h2 id="incident-detail-title">{dictionary.detail.withdrawnTitle}</h2>
+      <p>{notice?.reason[locale] ?? dictionary.detail.withdrawnTitle}</p>
+      <time dateTime={incident.updatedAt}>{incident.updatedAt}</time>
+      <button type="button" onClick={onClose}>{dictionary.detail.close}</button>
+    </aside>;
+  }
   return (
     <aside className="incident-detail" aria-labelledby="incident-detail-title">
       <div className="detail-heading">
@@ -24,6 +33,7 @@ export function IncidentDetail({
           {dictionary.detail.close}
         </button>
       </div>
+      <strong>{dictionary.status[incident.status]}</strong>
       <ConfidenceBadge confidence={incident.confidence} dictionary={dictionary} />
       <p>{incident.summary[locale]}</p>
       <section>
@@ -54,7 +64,7 @@ export function IncidentDetail({
             {incident.corrections.map((correction) => (
               <li key={`${correction.correctedAt}-${correction.changedFields.join("-")}`}>
                 <time dateTime={correction.correctedAt}>{correction.correctedAt}</time>
-                <p>{correction.reason[locale]}</p>
+                <p>{correction.reason[locale]}</p><p>{dictionary.detail.changedFields}: {correction.changedFields.map((field) => dictionary.changedFields[field] ?? dictionary.detail.otherField).join(", ")}</p>
               </li>
             ))}
           </ol>

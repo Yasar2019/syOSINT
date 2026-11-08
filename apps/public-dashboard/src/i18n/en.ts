@@ -85,7 +85,7 @@ export const en = {
     withdrawn: "Withdrawn",
   },
   summary: {
-    total: "Visible incidents",
+    total: "Active incidents",
     verified: "Corroborated or verified",
     needsAttention: "Disputed or unverified",
   },
@@ -94,7 +94,9 @@ export const en = {
     empty: "No incidents match the active filters.",
     viewDetails: "View details",
   },
+  changedFields: { title: "Title", summary: "Summary", uncertainty: "Uncertainty", location: "Location", occurredAt: "Event time", confidence: "Confidence", categories: "Categories", sources: "Sources", sourceCount: "Source count", status: "Status" },
   detail: {
+    withdrawnTitle: "Withdrawn report", changedFields: "Changed fields", otherField: "Other public field",
     title: "Incident detail",
     close: "Close details",
     occurred: "Occurred",

@@ -71,7 +71,7 @@ Approved design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-de
 
 Completed: private candidate-source review and private case grouping suggestions.
 
-Remaining: general incident correction/withdrawal tooling, retention jobs, backup documentation, and threat-model review.
+Incident correction/withdrawal tooling is implemented in PR #23, pending final CI/release verification. Remaining after that release: retention jobs, backup documentation, and threat-model review.
 
 ## Explicitly out of scope
 

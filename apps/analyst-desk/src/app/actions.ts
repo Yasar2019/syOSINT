@@ -122,7 +122,10 @@ export async function exportIncident(form: FormData) {
   try {
     incidentId = id(form);
     await api(`/incidents/${incidentId}/export`, "POST", { acknowledged: form.get("acknowledged") === "on" });
-  } catch (error) { failure(error); }
+  } catch {
+    if (incidentId > 0) incidentRevisionFailure(incidentId);
+    redirect("/?error=Local%20export%20unavailable.%20Check%20the%20incident%20and%20retry.");
+  }
   redirect(`/incident/${incidentId}?exported=1`);
 }
 
@@ -273,3 +276,42 @@ export async function reviewCandidate(form: FormData) {
   } catch (error) { candidateFailure(error); }
   redirect("/candidates");
 }
+
+function incidentRevisionFailure(incidentId: number): never {
+  redirect(`/incident/${incidentId}/publication?error=1`);
+}
+function revisionFields(form: FormData) {
+  const keys = ["title_en", "title_ar", "category", "summary_en", "summary_ar", "uncertainty_en", "uncertainty_ar", "location_en", "location_ar", "precision", "occurred_at", "confidence"];
+  return { ...Object.fromEntries(keys.map((key) => [key, value(form, key)])), private_governorate: value(form, "private_governorate") || null };
+}
+export async function saveIncidentCorrection(form: FormData) {
+  const incidentId = id(form);
+  try { await api(`/incidents/${incidentId}/correction`, "PUT", { expected_version: positiveId(form, "expected_version"), fields: revisionFields(form), reason_en: value(form, "reason_en"), reason_ar: value(form, "reason_ar") }); }
+  catch { incidentRevisionFailure(incidentId); }
+  redirect(`/incident/${incidentId}/publication?saved=1`);
+}
+export async function reviewIncidentCorrection(form: FormData) {
+  const incidentId = id(form);
+  const keys = ["independence_checked", "time_checked", "location_checked", "contradictions_checked", "person_safety_checked", "operational_safety_checked", "contradictions_acknowledged", "human_approved", "primary_evidence_checked"];
+  try { await api(`/incidents/${incidentId}/correction/review`, "POST", { expected_version: positiveId(form, "expected_version"), rationale: value(form, "rationale"), ...Object.fromEntries(keys.map((key) => [key, form.get(key) === "on"])) }); }
+  catch { incidentRevisionFailure(incidentId); }
+  redirect(`/incident/${incidentId}/publication?reviewed=1`);
+}
+export async function previewIncidentWithdrawal(_state: WithdrawalState, form: FormData): Promise<WithdrawalState> {
+  try {
+    const incidentId = id(form);
+    const preview = await api<{ record: Record<string, unknown>; preview_hash: string; version: number }>(`/incidents/${incidentId}/withdrawal/preview`, "POST", { expected_version: positiveId(form, "expected_version"), reason_en: value(form, "reason_en"), reason_ar: value(form, "reason_ar") });
+    return { preview };
+  } catch { return { error: "Withdrawal preview unavailable. Check the local service and review again." }; }
+}
+export type WithdrawalState = { error?: string; preview?: { record: Record<string, unknown>; preview_hash: string; version: number } };
+async function approveIncidentRevision(form: FormData, kind: "correction" | "withdrawal") {
+  const incidentId = id(form);
+  try {
+    if (form.get("acknowledged") !== "on" || !value(form, "preview_hash")) throw new Error("Review required");
+    await api(`/incidents/${incidentId}/${kind}/approve`, "POST", { expected_version: positiveId(form, "expected_version"), preview_hash: value(form, "preview_hash"), acknowledged: true });
+  } catch { incidentRevisionFailure(incidentId); }
+  redirect(`/incident/${incidentId}/publication?approved=1`);
+}
+export async function approveIncidentCorrection(form: FormData) { return approveIncidentRevision(form, "correction"); }
+export async function approveIncidentWithdrawal(form: FormData) { return approveIncidentRevision(form, "withdrawal"); }

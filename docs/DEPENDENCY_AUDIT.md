@@ -13,3 +13,7 @@ The owner explicitly approved this exception in chat on 2026-10-12 (America/Toro
 The JavaScript audit remains an independent CI job. The Pages workflow still requires overall CI success, including this audit with the single approved exception.
 
 Verification: before merge, audit must report no unexcepted high/critical issues, policy scanning must still pass, and all tests/builds/browser workflows must pass with the updated lockfile.
+
+## Incident revision release refresh — 2026-11-07
+
+PR #23 updates existing Next.js/eslint-config-next to 16.4.1 and Vitest to 4.1.12 for newly reported advisories. Vite 7.3.7 is pinned both as an override and a root development dependency: an override alone left pnpm's automatically installed peer at vulnerable 7.3.6. The direct declaration makes the existing transitive test runner peer resolve to the patched release. No new runtime package or audit exception is introduced. The existing braces-only exception is preserved; all other high/critical advisories still fail CI.

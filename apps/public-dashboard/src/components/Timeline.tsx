@@ -31,6 +31,7 @@ export function Timeline({
   dictionary: Dictionary;
   onSelect: (id: string) => void;
 }) {
+  incidents = incidents.filter((item) => item.status !== "withdrawn");
   const groups = groupByUtcDate(incidents);
 
   return (

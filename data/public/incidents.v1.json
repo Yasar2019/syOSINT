@@ -181,37 +181,43 @@
     {
       "id": "demo-political-005",
       "status": "withdrawn",
-      "categories": ["political-security"],
-      "confidence": "disputed",
-      "occurredAt": "2026-09-21T20:00:00Z",
+      "categories": [
+        "political-security"
+      ],
+      "confidence": "unverified",
+      "occurredAt": "2026-09-22T08:00:00Z",
       "updatedAt": "2026-09-22T08:00:00Z",
       "location": {
-        "en": "Location withheld for demonstration",
-        "ar": "الموقع محجوب لأغراض العرض",
+        "en": "Withheld",
+        "ar": "محجوب",
         "precision": "withheld"
       },
       "title": {
-        "en": "[DEMO] Disputed political statement exercise",
-        "ar": "[تجريبي] تمرين لبيان سياسي متنازع عليه"
+        "en": "Withdrawn report",
+        "ar": "تقرير مسحوب"
       },
       "summary": {
-        "en": "A fictional claim was withdrawn after contradictory demonstration evidence appeared.",
-        "ar": "سُحب ادعاء خيالي بعد ظهور أدلة تجريبية متناقضة."
+        "en": "Synthetic report withdrawn after reassessment.",
+        "ar": "سُحب التقرير التجريبي بعد إعادة التقييم."
       },
       "uncertainty": {
-        "en": "The original synthetic claim cannot be supported.",
-        "ar": "لا يمكن دعم الادعاء التجريبي الأصلي."
+        "en": "This report has been withdrawn.",
+        "ar": "تم سحب هذا التقرير."
       },
-      "sourceCount": 1,
-      "sources": [
+      "sourceCount": 0,
+      "sources": [],
+      "corrections": [
         {
-          "id": "demo-source-e",
-          "label": { "en": "Synthetic statement archive", "ar": "أرشيف بيانات تجريبي" },
-          "url": "https://example.com/syosint/demo-source-e",
-          "publishedAt": "2026-09-21T20:00:00Z"
+          "correctedAt": "2026-09-22T08:00:00Z",
+          "reason": {
+            "en": "Synthetic report withdrawn after reassessment.",
+            "ar": "سُحب التقرير التجريبي بعد إعادة التقييم."
+          },
+          "changedFields": [
+            "status"
+          ]
         }
-      ],
-      "corrections": []
+      ]
     },
     {
       "id": "demo-disinformation-006",
