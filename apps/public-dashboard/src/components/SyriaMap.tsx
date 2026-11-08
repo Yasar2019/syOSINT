@@ -1,3 +1,4 @@
+import { DetailedMap } from "./DetailedMap";
 import { geoPath } from "d3-geo";
 import type { PublicIncident } from "@syosint/schemas";
 import type { Dictionary, Locale } from "../i18n/types";
@@ -42,7 +43,7 @@ export function SyriaMap({
         <h2 id="syria-map-title">{dictionary.map.title}</h2>
         <p id="syria-map-description">{dictionary.map.description}</p>
       </div>
-      <svg
+      <DetailedMap incidents={incidents} locale={locale} dictionary={dictionary} onSelect={onSelect} fallback={<svg
         className="map-canvas"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
@@ -67,7 +68,7 @@ export function SyriaMap({
             <circle r="5" className={`marker-dot confidence-${incident.confidence}`} />
           </g>
         ))}
-      </svg>
+      </svg>} />
       <ol className="map-location-list" aria-label={dictionary.map.title}>
         {markers.map(({ incident }) => (
           <li key={incident.id}>

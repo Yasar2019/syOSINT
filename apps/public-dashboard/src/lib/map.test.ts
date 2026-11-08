@@ -36,3 +36,12 @@ describe("map safety", () => {
     expect(point![1]).toBeLessThanOrEqual(480);
   });
 });
+
+it('never plots withdrawn records or nonfinite coordinates even when their precision is allowed', () => {
+  const item = structuredClone(loadPublicDataset().incidents[0]);
+  item.status = 'withdrawn';
+  expect(isMarkerEligible(item)).toBe(false);
+  item.status = 'published';
+  item.location.latitude = Number.NaN;
+  expect(isMarkerEligible(item)).toBe(false);
+});

@@ -30,7 +30,7 @@ describe("DashboardClient", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: /infrastructure/i }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("1 incident");
+    expect(screen.getByText("1 incidents visible")).toHaveAttribute("role", "status");
     expect(screen.getAllByTestId("incident-card")).toHaveLength(1);
   });
 

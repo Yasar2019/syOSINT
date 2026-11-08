@@ -107,6 +107,18 @@ export const en = {
     noCorrections: "No corrections recorded.",
   },
   map: {
+    controls: "Map controls",
+    style: "Basemap",
+    dark: "Dark",
+    streets: "Streets",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    reset: "Reset to Syria",
+    loading: "Loading detailed map… Overview remains available.",
+    unavailable: "Detailed map unavailable. Showing the offline overview.",
+    interaction: "Drag to explore · Ctrl/⌘ + scroll or buttons to zoom · Locations are generalized.",
+    retry: "Retry detailed map",
+
     title: "Syria situation map",
     description: "Generalized demonstration locations; no live tactical positions.",
     noLocation: "Location withheld",
