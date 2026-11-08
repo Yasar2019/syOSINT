@@ -41,9 +41,10 @@ export function DetailedMap({ incidents, locale, dictionary, onSelect, fallback 
       queueMicrotask(() => { if (!cancelled) setStatus('unavailable'); });
       return () => { cancelled = true; };
     }
-    void import('maplibre-gl').then(({ Map }) => {
+    void import('maplibre-gl').then(({ Map, setWorkerUrl }) => {
       if (cancelled || !host.current) return;
       setStatus('loading');
+      setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString());
       instance = new Map({
         container: host.current,
         style: STYLES[style],

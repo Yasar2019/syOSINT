@@ -110,6 +110,7 @@ test('keeps the bundled map usable without WebGL and localizes its controls', as
   await expect(map.locator('.map-location-list button').first()).toBeVisible();
   await map.locator('.map-location-list button').first().click();
   await expect(page.locator('.incident-detail')).toBeVisible();
+  await page.locator('.incident-detail').getByRole('button',{name:'Close details',exact:true}).click();
   await page.getByRole('button', {name:'العربية'}).click();
   await expect(map.getByLabel('خريطة الأساس')).toBeVisible();
   await expect(map.getByRole('button', {name:'إعادة تحميل الخريطة التفصيلية'})).toBeVisible();
@@ -126,6 +127,7 @@ test('renders the real vector engine, switches basemap and opens a mapped incide
   await expect(marker).toBeVisible();
   await marker.click();
   await expect(page.locator('.incident-detail')).toBeVisible();
+  await page.locator('.incident-detail').getByRole('button',{name:'Close details',exact:true}).click();
   await map.getByRole('button',{name:'Zoom in',exact:true}).click();
   await map.getByLabel('Basemap').selectOption('streets');
   await expect(map.locator('.detailed-map')).toHaveAttribute('data-map-status','ready');
