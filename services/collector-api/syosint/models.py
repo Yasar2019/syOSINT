@@ -84,6 +84,7 @@ class IntakeItem(Base):
             sqlite_where=text("native_id IS NOT NULL AND status != 'duplicate'"),
             postgresql_where=text("native_id IS NOT NULL AND status != 'duplicate'"),
         ),
+        {"sqlite_autoincrement": True},
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), index=True)
@@ -134,6 +135,7 @@ class IntakeQuarantine(Base):
             "reason",
             name="uq_intake_quarantine_source_digest_reason",
         ),
+        {"sqlite_autoincrement": True},
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), index=True)
@@ -147,6 +149,7 @@ class IntakeQuarantine(Base):
 
 class IntakeRevision(Base):
     __tablename__ = "intake_revisions"
+    __table_args__ = {"sqlite_autoincrement": True}
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     item_id: Mapped[int] = mapped_column(ForeignKey("intake_items.id"), index=True)
     text: Mapped[str] = mapped_column(Text)
@@ -172,6 +175,7 @@ class TelegramCursor(Base):
 
 class MediaAsset(Base):
     __tablename__ = "media_assets"
+    __table_args__ = {"sqlite_autoincrement": True}
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     item_id: Mapped[int] = mapped_column(ForeignKey("intake_items.id"), index=True)
     local_path: Mapped[str] = mapped_column(Text)
@@ -185,6 +189,7 @@ class MediaAsset(Base):
 
 class TelegramPublicationPreview(Base):
     __tablename__ = "telegram_publication_previews"
+    __table_args__ = {"sqlite_autoincrement": True}
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     item_id: Mapped[int] = mapped_column(ForeignKey("intake_items.id"))
     draft_hash: Mapped[str] = mapped_column(String(64), unique=True)
@@ -291,3 +296,23 @@ class IncidentWithdrawalPreview(Base):
     reason_en: Mapped[str] = mapped_column(Text)
     reason_ar: Mapped[str] = mapped_column(Text)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class RetentionHold(Base):
+    __tablename__ = 'retention_holds'
+    __table_args__ = (Index('uq_active_retention_hold', 'target_kind', 'target_id', unique=True, sqlite_where=text('released_at IS NULL'), postgresql_where=text('released_at IS NULL')),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    target_kind: Mapped[str] = mapped_column(String(20))
+    target_id: Mapped[int] = mapped_column(Integer)
+    reason: Mapped[str] = mapped_column(String(1000))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class RetentionRun(Base):
+    __tablename__ = 'retention_runs'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    dry_run: Mapped[bool] = mapped_column(Boolean)
+    counts: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(20))

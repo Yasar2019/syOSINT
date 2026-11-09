@@ -2,7 +2,6 @@
 
 import hashlib
 import os
-import stat
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -10,10 +9,8 @@ from pathlib import Path
 from typing import AsyncIterable, Iterable
 from uuid import uuid4
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import record
 from .models import MediaAsset
 
 
@@ -137,25 +134,14 @@ async def preserve_media_async(stream: AsyncIterable[bytes], metadata: MediaMeta
 
 
 def purge_expired_media(db: Session, now: datetime, media_root: Path) -> int:
-    root = _media_root(media_root)
-    expired = db.scalars(select(MediaAsset).where(
-        MediaAsset.deleted_at.is_(None), MediaAsset.expires_at <= now,
-    )).all()
-    # Validate all paths before changing or deleting any asset.
-    paths = []
-    for asset in expired:
-        path = Path(asset.local_path)
-        if not path.is_absolute() or path.is_symlink() or not path.resolve().is_relative_to(root):
-            raise MediaPolicyError("unsafe path")
-        if path.exists():
-            info = path.stat()
-            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-                raise MediaPolicyError("unsafe path")
-        paths.append((asset, path))
-    for asset, path in paths:
-        path.unlink(missing_ok=True)
-        asset.deleted_at = now
-        record(db, "media.deleted", "media_asset", asset.id,
-               before={"sha256": asset.sha256}, after={"deleted_at": now})
-    db.commit()
-    return len(paths)
+    """Compatibility entrypoint; apply all hold/link and descriptor protections."""
+    from .retention import run_retention
+    # An existing caller transaction must not race an independently locked cleanup.
+    if db.new or db.dirty or db.deleted:
+        raise MediaPolicyError("pending changes")
+    db.rollback()
+    result = run_retention(db.get_bind(), media_root, now, apply=True, media_only=True)
+    db.expire_all()
+    if result["failed"]:
+        raise MediaPolicyError("unsafe path or media failure")
+    return result["media"]

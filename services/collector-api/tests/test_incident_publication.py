@@ -122,7 +122,7 @@ def test_populated_migration_upgrade_and_constraints(tmp_path):
     command.upgrade(cfg,'head')
     with sqlite3.connect(path) as conn:
         assert conn.execute('select count(*) from incidents').fetchone()[0]==1
-        assert conn.execute('select version_num from alembic_version').fetchone()[0]=='0007'
+        assert conn.execute('select version_num from alembic_version').fetchone()[0]=='0008'
         assert conn.execute('select count(*) from incident_publications').fetchone()[0]==0
     c=setup(tmp_path)
     c.post('/incidents/1/export',json={'acknowledged':True})

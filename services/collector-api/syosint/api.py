@@ -10,6 +10,8 @@ from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -51,6 +53,9 @@ from .telegram_publication import (
 )
 from .telegram_export import PublicSchemaError, write_pending_telegram_export
 from .telegram_scheduler import TelegramScheduler
+from .retention_scheduler import RetentionScheduler
+from . import retention
+from .models import RetentionHold, RetentionRun
 
 
 INCIDENT_CATEGORIES = (
@@ -312,10 +317,19 @@ class RevisionApprovalInput(Strict):
 def create_app(database_url: str, export_dir: Path) -> FastAPI:
     engine = database(database_url)
 
+    private_root = Path(os.environ.get("SYOSINT_PRIVATE_DIR", str(Path(__file__).resolve().parents[3] / "private-data")))
+    retention_root = private_root.absolute() / "telegram/media"
+    apply_enabled = os.environ.get("SYOSINT_RETENTION_APPLY") == "1"
+    retention_enabled = os.environ.get("SYOSINT_RETENTION_SCHEDULER", "1") != "0"
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         scheduler = None
         telegram_scheduler = None
+        retention_scheduler = RetentionScheduler(engine, retention_root, apply=apply_enabled) if retention_enabled else None
+        if retention_scheduler is not None:
+            app.state.retention_scheduler = retention_scheduler
+            retention_scheduler.start()
         if os.environ.get("SYOSINT_RSS_SCHEDULER", "1") != "0":
             scheduler = RssScheduler(engine)
             app.state.rss_scheduler = scheduler
@@ -338,6 +352,8 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
         try:
             yield
         finally:
+            if retention_scheduler is not None:
+                await retention_scheduler.stop()
             if telegram_scheduler is not None:
                 await telegram_scheduler.stop()
             if scheduler is not None:
@@ -347,11 +363,78 @@ def create_app(database_url: str, export_dir: Path) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
     app.state.export_dir = export_dir
     app.state.engine = engine
+
+    @app.exception_handler(RequestValidationError)
+    async def safe_retention_validation(request: Request, exc: RequestValidationError):
+        if request.url.path.startswith("/retention/"):
+            return JSONResponse({"detail": "Invalid retention request"}, status_code=422)
+        return await request_validation_exception_handler(request, exc)
+
     publication_lock = Lock()
 
     def session():
         with Session(engine) as db:
             yield db
+
+    class RetentionReason(Strict):
+        reason: str = Field(min_length=1, max_length=1000)
+
+        @field_validator("reason")
+        @classmethod
+        def clean(cls, value):
+            return retention.reason_value(value)
+
+    class RetentionHoldInput(RetentionReason):
+        target_kind: Literal["intake", "media", "quarantine"]
+        target_id: int = Field(gt=0, strict=True)
+
+    class RetentionApply(Strict):
+        acknowledged: StrictBool
+
+    def retention_call(function, *args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except retention.RetentionConflict:
+            raise HTTPException(409, "Retention conflict") from None
+        except retention.RetentionError:
+            raise HTTPException(400, "Invalid retention request") from None
+        except Exception:
+            raise HTTPException(503, "Retention unavailable") from None
+
+    @app.get("/retention/status")
+    def retention_status():
+        def read():
+            with Session(engine) as db:
+                last = db.scalar(select(RetentionRun).order_by(RetentionRun.id.desc()).limit(1))
+                return {"enabled": retention_enabled, "apply_enabled": apply_enabled,
+                        "media_days": 30, "metadata_days": 180,
+                        "last_run": None if last is None else {"timestamp": retention.utc(last.timestamp), "dry_run": last.dry_run, "status": last.status, "counts": last.counts}}
+        return retention_call(read)
+
+    @app.post("/retention/preview")
+    def retention_preview(payload: Strict | None = None):
+        return retention_call(retention.run_retention, engine, retention_root, now())
+
+    @app.post("/retention/run")
+    def retention_run(payload: RetentionApply):
+        if not apply_enabled or payload.acknowledged is not True:
+            raise HTTPException(403, "Retention apply is disabled or unacknowledged")
+        return retention_call(retention.run_retention, engine, retention_root, now(), apply=True)
+
+    @app.get("/retention/holds")
+    def retention_holds():
+        def read():
+            with Session(engine) as db:
+                return [retention.hold_response(h) for h in db.scalars(select(RetentionHold).order_by(RetentionHold.id.desc()).limit(1000))]
+        return retention_call(read)
+
+    @app.post("/retention/holds")
+    def retention_hold(payload: RetentionHoldInput):
+        return retention_call(retention.place_hold, engine, payload.target_kind, payload.target_id, payload.reason, now())
+
+    @app.post("/retention/holds/{hold_id}/release")
+    def retention_release(hold_id: int, payload: RetentionReason):
+        return retention_call(retention.release_hold, engine, hold_id, payload.reason, now())
 
     def telegram_transport():
         try:

@@ -3,7 +3,7 @@ from dataclasses import asdict
 from datetime import datetime
 from hashlib import sha256
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from .intake_types import NormalizedIntakeItem, QuarantinedIntakeItem, StoreSummary
@@ -64,6 +64,12 @@ def store_intake_batch(
     """
     created = duplicates = quarantine_created = 0
     try:
+        connection = db.connection()
+        if (connection.dialect.name == "sqlite" and
+                not connection.connection.driver_connection.in_transaction):
+            # Eligibility reads and child writes share retention's writer lock;
+            # otherwise a deferred SELECT can observe a parent removed on apply.
+            db.execute(text("BEGIN IMMEDIATE"))
         for item in items:
             if _store_item(db, source.id, item):
                 created += 1

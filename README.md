@@ -2,7 +2,7 @@
 
 syOSINT is an open-source, bilingual situational-awareness workspace for journalists and OSINT researchers monitoring public reporting about Syria. It is designed around traceable evidence, human verification, explicit uncertainty, and safety-aware publication.
 
-> **Current milestone:** Milestones 1–3 and the expanded public RSS news wire are deployed. Local Telegram intake, private analyst views, and the individually approved public Telegram wire have merged into `main` through PR #15. Confirm the Pages deployment before treating the Telegram view as live. The tracked Telegram dataset has no approved posts yet, and reviewed incidents remain synthetic until a human explicitly publishes approved records.
+> **Current milestone:** The public dashboard and RSS wire are deployed, with detailed mapping and correction/withdrawal history. Local Telegram intake and individually reviewed Telegram publication are implemented. Private retention adds preservation holds and preview-first cleanup. Reviewed incident fixtures remain synthetic, and the Telegram wire remains empty until a human explicitly approves and stages real records. See the [roadmap](docs/ROADMAP.md) for remaining backup, security review and operator acceptance work.
 
 ## Principles
 
@@ -18,7 +18,7 @@ syOSINT is an open-source, bilingual situational-awareness workspace for journal
 - Static English/Arabic dashboard with RTL switching.
 - Category, confidence, and text filters that update the map, timeline, and feed together.
 - Accessible incident detail with uncertainty, public references, and correction history.
-- Bundled Natural Earth-derived Syria geometry with no map tile or paid service calls.
+- Detailed MapLibre map with free OpenFreeMap basemaps, plus a bundled Syria geometry fallback; see [map attribution and privacy](docs/source-policy/MAP.md).
 - Strict public-data validation and synthetic fixtures covering all confidence labels and incident categories.
 - Automated unit, policy, browser, static-export, and GitHub Pages checks.
 - Local SQLite evidence and audit trail, human safety review, exact sanitized preview, and explicit staged JSON export.
@@ -27,7 +27,7 @@ syOSINT is an open-source, bilingual situational-awareness workspace for journal
 
 ## Architecture
 
-The public side is a statically exported Next.js application that consumes validated, versioned JSON datasets. Map geometry is bundled at build time. There is no dashboard backend and no client-side request to an external data or map service. A scheduled GitHub Actions job live-checks all enabled feeds, fetches the allowlist, projects only source/headline/time/link metadata plus public source status and legal attribution, validates the `1.1.0` wire, and redeploys the static site. New matching headlines normally appear within 30–35 minutes. Retention is seven days, at most 100 entries per source, and at most 500 entries globally.
+The public side is a statically exported Next.js application that consumes validated, versioned JSON datasets. There is no dashboard backend. Incident datasets and fallback geometry are bundled at build time; detailed mode requests public basemap tiles from OpenFreeMap as described in the [map policy](docs/source-policy/MAP.md). A scheduled GitHub Actions job live-checks all enabled feeds, fetches the allowlist, projects only source/headline/time/link metadata plus public source status and legal attribution, validates the `1.1.0` wire, and redeploys the static site. New matching headlines normally appear within 30–35 minutes. Retention is seven days, at most 100 entries per source, and at most 500 entries globally.
 
 The reviewed feed pool has nine English and Arabic sources, including North Press and Enab Baladi English. See the [dated source review record](docs/source-policy/RSS-SOURCE-REVIEWS.md) for exact endpoints, terms, attribution evidence, and rejected candidates.
 
@@ -119,6 +119,10 @@ The bundled boundary geometry provides geographic context and expresses no legal
 ## GitHub Pages
 
 After merging to `main`, select **Settings → Pages → Source → GitHub Actions**. CI-gated pushes deploy the reviewed repository state. The `Refresh RSS News Wire` workflow also runs every 30 minutes and can be dispatched manually. Both Pages workflows first run the same fail-closed live gate across all enabled sources, then collect, retain valid recent entries from the last deployed wire when appropriate, validate the public contracts, and publish `apps/public-dashboard/out` under `/syOSINT/`. Logs expose bounded per-source status tokens while the step summary is aggregate only. A failed gate, collection, validation, or build does not replace the last successful Pages artifact. After a transient outage, inspect the safe category and manually rerun; for a permanent endpoint or terms change, disable and re-review the source rather than bypassing the gate.
+
+## Private retention
+
+The local desk includes [private retention controls](docs/source-policy/RETENTION.md) at `http://127.0.0.1:3001/maintenance`: cleanup previews, preservation holds and explicit manual application. The daily scheduler defaults to preview only. Media expires after 30 days and unlinked intake/quarantine after 180 days, while case-linked evidence and publication/audit history are protected. Deletion requires `SYOSINT_RETENTION_APPLY=1` in your local environment; review the guide before enabling it.
 
 ## Roadmap
 

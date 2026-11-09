@@ -247,3 +247,24 @@ async def test_optional_media_failure_does_not_erase_collected_post(source, tmp_
         assert len(db.scalars(select(IntakeItem)).all()) == 1
         assert db.scalars(select(MediaAsset)).all() == []
     assert list((tmp_path / "private-media").iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_retention_during_download_cannot_create_orphan_asset(source,tmp_path):
+    from syosint.retention import run_retention
+    engine, source_id=source
+    old=NOW-timedelta(days=181)
+    post=TelegramMessage(1,'synthetic',old,media_mime_type='image/png',media_size=9)
+    await sync_channel(engine,source_id,FakeTransport([post]),old,media_root=tmp_path/'media')
+    with Session(engine) as db:
+        db.get(Source,source_id).media_enabled=True
+        db.commit()
+    class RacingTransport(FakeTransport):
+        async def iter_media_chunks(self,channel_id,message_id):
+            assert run_retention(engine,tmp_path/'media',NOW,apply=True)['intake']==1
+            yield b'synthetic'
+    await sync_channel(engine,source_id,RacingTransport([post]),NOW,media_root=tmp_path/'media')
+    with Session(engine) as db:
+        assert db.scalar(select(MediaAsset)) is None
+        assert db.scalar(select(IntakeItem)) is None
+    assert list((tmp_path/'media').iterdir())==[]
