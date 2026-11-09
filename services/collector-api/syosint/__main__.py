@@ -9,6 +9,9 @@ from .api import create_app
 
 def main(argv=None):
     args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "retention":
+        from .retention_cli import run_cli
+        return run_cli(args[1:])
     if args and args[0] == "telegram":
         from .telegram_cli import run_cli
 

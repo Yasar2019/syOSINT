@@ -15,6 +15,8 @@ export default defineConfig({
         SYOSINT_DB_PATH: `/tmp/syosint-browser-${suffix}.sqlite3`,
         SYOSINT_EXPORT_DIR: `/tmp/syosint-browser-export-${suffix}`,
         SYOSINT_RSS_SCHEDULER: "0",
+        SYOSINT_RETENTION_SCHEDULER: "0",
+        SYOSINT_RETENTION_APPLY: "0",
       },
     },
     { command: "pnpm start", url: "http://127.0.0.1:3001", reuseExistingServer: false },

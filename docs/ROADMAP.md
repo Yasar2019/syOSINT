@@ -69,9 +69,11 @@ Approved design: `docs/superpowers/specs/2026-09-24-source-expansion-telegram-de
 
 ### Milestone 5 — Discovery and hardening
 
-Completed: private candidate-source review and private case grouping suggestions.
+Completed: private candidate-source review, private case grouping suggestions, incident correction/withdrawal tooling (PR #23), and the detailed free MapLibre map (PR #25).
 
-Incident correction/withdrawal tooling is implemented in PR #23, pending final CI/release verification. Remaining after that release: retention jobs, backup documentation, and threat-model review.
+Private retention now adds 30-day media and 180-day unlinked intake/quarantine expiry, preservation holds, a daily local scheduler, CLI and private maintenance controls. It defaults to read-only preview; deletion requires local activation. See `docs/source-policy/RETENTION.md`. Evidence, published records, revisions and audit history remain protected.
+
+Remaining: backup/recovery procedures, threat-model review, and real operator acceptance with individually reviewed public records. Public incident fixtures remain synthetic until that human review/publication step.
 
 ## Explicitly out of scope
 

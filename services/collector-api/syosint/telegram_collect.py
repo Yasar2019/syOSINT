@@ -8,7 +8,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Protocol
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -187,6 +187,7 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
                     MediaAsset.item_id == saved.id, MediaAsset.deleted_at.is_(None),
                 ).limit(1)) is not None
                 item_id = saved.id if saved else None
+                item_digest = saved.raw_digest if saved else None
             if has_asset or item_id is None:
                 continue
             asset = None
@@ -198,15 +199,28 @@ async def sync_channel(engine: Engine, source_id: int, transport: TelegramTransp
                 )
                 if asset is not None:
                     with Session(engine) as db:
+                        db.execute(text("BEGIN IMMEDIATE"))
                         current_source = db.get(Source, source_id)
-                        if current_source is None or not current_source.media_enabled:
-                            Path(asset.local_path).unlink(missing_ok=True)
+                        parent = db.get(IntakeItem, item_id)
+                        # A retention apply may remove an unchanged old intake while
+                        # the optional download awaits transport. Recheck identity
+                        # under the same SQLite writer lock before inserting media.
+                        if (current_source is None or not current_source.media_enabled or
+                                parent is None or parent.source_id != source_id or
+                                parent.platform != "telegram" or parent.native_id != native_id or
+                                parent.raw_digest != item_digest):
+                            from .retention import safe_file
+                            safe_file(asset.local_path, root, unlink=True)
                             continue
                         db.add(asset)
                         db.commit()
             except Exception:
                 if asset is not None:
-                    Path(asset.local_path).unlink(missing_ok=True)
+                    try:
+                        from .retention import safe_file
+                        safe_file(asset.local_path, root, unlink=True)
+                    except Exception:
+                        pass
                 # Item collection remains durable; optional media cannot block it.
                 pass
     oldest = min((item.published_at for item in items), default=None)

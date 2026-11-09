@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from telethon.tl.types import Channel
 
 from .models import Source, TelegramCursor
-from .telegram_media import purge_expired_media
 from .telegram_client import TelethonAuthClient
 from .telegram_collect import ChannelPolicyError, sync_channel
 from .telegram_session import TelegramSettings, session_path
@@ -150,9 +149,5 @@ class TelegramScheduler:
                         await transport.disconnect()
                     except Exception:
                         pass
-        try:
-            with Session(self.engine) as db:
-                purge_expired_media(db, now, self.settings.private_dir / "telegram" / "media")
-        except Exception:
-            # Path violations and filesystem failures never delete an unverified file.
-            pass
+        # Retention is owned by the opt-in daily retention scheduler. Collection
+        # must never bypass its preview default or preservation holds.

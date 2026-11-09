@@ -221,3 +221,17 @@ def test_rss_changed_digest_retains_legacy_duplicate_observation(db):
         ("duplicate", "Revised headline", "rss", "42"),
     ]
     assert db.scalar(select(func.count(IntakeRevision.id))) == 0
+
+
+def test_collector_acquires_retention_writer_lock_before_intake_read(db,source,monkeypatch):
+    from syosint import intake_store
+    observed=[]
+    original=intake_store._store_item
+    def checked(session,*args):
+        connection=session.connection()
+        assert connection.connection.driver_connection.in_transaction
+        observed.append(True)
+        return original(session,*args)
+    monkeypatch.setattr(intake_store,'_store_item',checked)
+    intake_store.store_intake_batch(db,source,(normalized(),),(),None,NOW)
+    assert observed==[True]
